@@ -8,37 +8,43 @@
 .buildlog/
 .history
 .svn/
+migrate_working_dir/
+.metadata
 
-# IntelliJ related
+# IntelliJ / Android Studio related
 *.iml
 *.ipr
 *.iws
 .idea/
+out/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Visual Studio Code related
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
 .dart_tool/
 .flutter-plugins
+.flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
-/build/
-.flutter-plugins-dependencies
-
+build/
 
 # Android related
 **/android/**/gradle-wrapper.jar
 **/android/.gradle
 **/android/captures/
-**/android/gradlew
-**/android/gradlew.bat
 **/android/local.properties
-**/android/**/GeneratedPluginRegistrant.java
+# Keystore file (SECURITY: Never commit this)
+**/android/key.properties
+# App bundle output
+**/android/**/bundle/
+
+# NOTE: We generally DO want to commit gradlew and gradle-wrapper.properties
+# so that the build works on other machines.
+# **/android/gradlew
+# **/android/gradlew.bat
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
@@ -66,6 +72,11 @@
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3
