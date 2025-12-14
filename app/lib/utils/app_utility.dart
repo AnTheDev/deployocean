@@ -17,7 +17,7 @@ class AppUtility {
       {String title = Strings.appName,
         String positiveText = 'Okay',
         bool cancelable = true,
-        VoidCallback onPressed}) {
+        VoidCallback? onPressed}) {
     onPressed ??= () {
         Navigator.pop(context);
       };
@@ -32,13 +32,14 @@ class AppUtility {
               ),
               content: Text(message),
               actions: <Widget>[
-                FlatButton(
+                TextButton(
                   child: Text(
                     positiveText,
                     style: TextStyle(
                         color: Theme
                             .of(context)
-                            .accentColor,
+                            .colorScheme
+                            .secondary,
                         fontWeight: FontWeight.bold),
                   ),
                   onPressed: onPressed,
@@ -63,7 +64,7 @@ class AppUtility {
             ),
             content: Text(message),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                 child: Text(
                   negativeText,
                   style: TextStyle(
@@ -73,13 +74,14 @@ class AppUtility {
                   Navigator.pop(context);
                 },
               ),
-              FlatButton(
+              TextButton(
                 child: Text(
                   positiveText,
                   style: TextStyle(
                       color: Theme
                           .of(context)
-                          .accentColor,
+                          .colorScheme
+                          .secondary,
                       fontWeight: FontWeight.bold),
                 ),
                 onPressed: onPressed,

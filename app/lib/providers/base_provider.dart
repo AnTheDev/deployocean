@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 enum ViewStatus { Loading, Ready }
 
 class BaseProvider extends ChangeNotifier {
-  ViewStatus _status;
+  ViewStatus _status = ViewStatus.Ready; // Initialize with a default value
 
   ViewStatus get viewStatus => _status;
 

@@ -10,7 +10,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'constants/app_theme.dart';
 import 'constants/strings.dart';
-import 'pages/home/home_page.dart';
+import 'pages/auth/landing_page.dart'; // Import the new landing page
 import 'providers/base_provider.dart';
 import 'routes.dart';
 import 'services/locator.dart';
@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
       title: Strings.appName,
       theme: themeData,
       routes: Routes.routes,
-      home: HomePage(),
+      home: LandingPage(), // Set LandingPage as the home screen
       supportedLocales: const [
         Locale('en'),
         Locale('vi'),
