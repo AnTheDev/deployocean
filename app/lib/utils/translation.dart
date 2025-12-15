@@ -5,34 +5,39 @@ import 'package:flutter/services.dart' show rootBundle;
 
 class Translations {
   Translations(this.locale);
-  Locale locale;
-  static Map<dynamic, dynamic> _localizedValues;
+  final Locale locale;
+
+  // Initialize with an empty map
+  static Map<String, dynamic> _localizedValues = {};
   static String trackingLanguage = 'en';
 
-  static Translations of(BuildContext context) {
+  static Translations? of(BuildContext context) {
     return Localizations.of<Translations>(context, Translations);
   }
 
-  static String text(String key, {Map args}) {
-    String result = _localizedValues[key];
+  // Make 'args' nullable and provide a default empty map if needed
+  static String text(String key, {Map<String, String>? args}) {
+    String? result = _localizedValues[key];
+    if (result == null) return '** $key not found';
+
     if (args != null) {
-      args.forEach((key, value) {
-        result = result.replaceAll('{$key}', value);
+      args.forEach((argKey, value) {
+        result = result!.replaceAll('{$argKey}', value);
       });
     }
-    return result ?? '** $key not found';
+    return result!;
   }
 
   static Future<Translations> load(Locale locale) async {
-    final Translations translations = new Translations(locale);
+    final Translations translations = Translations(locale);
     trackingLanguage = translations.currentLanguage;
     final String jsonContent =
         await rootBundle.loadString('assets/langs/$trackingLanguage.json');
-    _localizedValues = json.decode(jsonContent);
+    _localizedValues = json.decode(jsonContent).cast<String, dynamic>();
     return translations;
   }
 
-  get currentLanguage => locale.languageCode;
+  String get currentLanguage => locale.languageCode;
 }
 
 class TranslationsDelegate extends LocalizationsDelegate<Translations> {

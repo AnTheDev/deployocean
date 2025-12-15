@@ -6,15 +6,16 @@ const String CONFIG_LANG = 'config_lang';
 
 // ignore: avoid_classes_with_only_static_members
 class SharedPref {
-  static SharedPreferences _sharedPref;
+  // Use 'late' to indicate that this variable will be initialized before it's used.
+  static late SharedPreferences _sharedPref;
 
   static SharedPreferences get sharedPref => _sharedPref;
 
-  static Future init() async {
+  static Future<void> init() async {
     _sharedPref = await SharedPreferences.getInstance();
   }
 
-  static Future clear() async {
-    _sharedPref.clear();
+  static Future<void> clear() async {
+    await _sharedPref.clear(); // Add await for the async operation
   }
 }
