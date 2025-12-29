@@ -1,10 +1,35 @@
-class ApiConfig {
-  // For Android Emulator, 10.0.2.2 is the address of the host machine (your computer).
-  // If you are using a real device, you need to use your computer's local IP address.
-  // Example: static const String baseUrl = 'http://192.168.1.10:8000/api';
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-  // Auth endpoints
+class ApiConfig {
+  static String get baseUrl {
+    const String apiVersion = '/v1';
+    String base;
+
+    if (kIsWeb) {
+      base = 'http://127.0.0.1:8080/api';
+    } else {
+      if (Platform.isAndroid) {
+        base = 'http://10.0.2.2:8080/api';
+      } else {
+        base = 'http://127.0.0.1:8080/api';
+      }
+    }
+    return base + apiVersion;
+  }
+
+  // --- Auth Endpoints ---
   static const String login = '/auth/login';
   static const String register = '/auth/register';
+
+  // --- Fridge Item Endpoints ---
+  static const String fridgeItems = '/fridge-items';
+  static String familyFridgeItems(int familyId) => '/families/$familyId/fridge-items';
+  static String familyFridgeItemsActive(int familyId) => '/families/$familyId/fridge-items/active';
+  static String familyFridgeItemsExpiring(int familyId) => '/families/$familyId/fridge-items/expiring';
+  static String familyFridgeItemsExpired(int familyId) => '/families/$familyId/fridge-items/expired';
+  static String familyFridgeItemsStatistics(int familyId) => '/families/$familyId/fridge-items/statistics';
+  static String fridgeItemById(int id) => '/fridge-items/$id';
+  static String consumeFridgeItem(int id) => '/fridge-items/$id/consume';
+  static String discardFridgeItem(int id) => '/fridge-items/$id/discard';
 }
