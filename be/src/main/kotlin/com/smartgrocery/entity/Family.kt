@@ -18,6 +18,9 @@ class Family(
     @Column(name = "description", length = 255)
     var description: String? = null,
 
+    @Column(name = "image_url", length = 500)
+    var imageUrl: String? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     var createdBy: User,

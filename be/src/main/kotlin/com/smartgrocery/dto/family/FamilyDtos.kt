@@ -2,17 +2,17 @@ package com.smartgrocery.dto.family
 
 import com.smartgrocery.dto.auth.UserResponse
 import com.smartgrocery.entity.FamilyRole
+import com.smartgrocery.entity.InvitationStatus
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
 import java.time.Instant
 
+// DTO cho việc tạo family với multipart form
 data class CreateFamilyRequest(
-    @field:NotBlank(message = "Family name is required")
-    @field:Size(max = 100, message = "Family name must not exceed 100 characters")
     val name: String,
-
-    @field:Size(max = 255, message = "Description must not exceed 255 characters")
-    val description: String? = null
+    val description: String? = null,
+    val friendIds: List<Long> = emptyList()  // Danh sách bạn bè cần mời
 )
 
 data class UpdateFamilyRequest(
@@ -35,6 +35,7 @@ data class FamilyResponse(
     val id: Long,
     val name: String,
     val description: String?,
+    val imageUrl: String?,
     val inviteCode: String,
     val createdBy: UserSimpleResponse,
     val memberCount: Int,
@@ -45,9 +46,21 @@ data class FamilyDetailResponse(
     val id: Long,
     val name: String,
     val description: String?,
+    val imageUrl: String?,
     val inviteCode: String,
     val createdBy: UserSimpleResponse,
     val members: List<FamilyMemberResponse>,
+    val pendingInvitations: List<FamilyInvitationResponse>? = null,
+    val createdAt: Instant
+)
+
+data class FamilyInvitationResponse(
+    val id: Long,
+    val familyId: Long,
+    val familyName: String,
+    val inviter: UserSimpleResponse,
+    val invitee: UserSimpleResponse,
+    val status: InvitationStatus,
     val createdAt: Instant
 )
 
@@ -74,5 +87,9 @@ data class UpdateMemberRequest(
 
 data class RegenerateInviteCodeResponse(
     val inviteCode: String
+)
+
+data class RespondToInvitationRequest(
+    val accept: Boolean
 )
 

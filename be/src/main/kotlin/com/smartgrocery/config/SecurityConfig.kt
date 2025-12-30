@@ -43,6 +43,8 @@ class SecurityConfig(
                     .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                     // Actuator
                     .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                    // Public file serving
+                    .requestMatchers("/files/**").permitAll()
                     // Public read-only endpoints
                     .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/master-products/**").permitAll()

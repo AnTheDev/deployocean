@@ -46,10 +46,21 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+
 server:
   port: 8080
   servlet:
     context-path: /
+
+# File Upload Configuration
+file:
+  upload-dir: uploads
+  max-size: 5242880  # 5MB in bytes
 
 # JWT Configuration
 jwt:

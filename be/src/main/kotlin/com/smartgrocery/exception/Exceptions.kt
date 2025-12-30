@@ -55,6 +55,28 @@ enum class ErrorCode(val code: Int, val message: String) {
     CATEGORY_NOT_FOUND(1900, "Category not found"),
     PRODUCT_NOT_FOUND(1901, "Product not found"),
 
+    // Friendship errors (2000-2099)
+    FRIENDSHIP_NOT_FOUND(2000, "Friendship not found"),
+    FRIEND_REQUEST_ALREADY_EXISTS(2001, "Friend request already exists"),
+    CANNOT_SEND_REQUEST_TO_SELF(2002, "Cannot send friend request to yourself"),
+    NOT_FRIENDS(2003, "You are not friends with this user"),
+    ALREADY_FRIENDS(2004, "You are already friends with this user"),
+    FRIEND_REQUEST_NOT_PENDING(2005, "Friend request is not pending"),
+    NOT_YOUR_FRIEND_REQUEST(2006, "This friend request is not for you"),
+
+    // Family invitation errors (2100-2199)
+    FAMILY_INVITATION_NOT_FOUND(2100, "Family invitation not found"),
+    NOT_INVITED_TO_FAMILY(2101, "You are not invited to this family"),
+    INVITATION_NOT_PENDING(2102, "Invitation is not pending"),
+    MUST_INVITE_AT_LEAST_ONE_FRIEND(2103, "Must invite at least one friend when creating a family"),
+    CAN_ONLY_INVITE_FRIENDS(2104, "You can only invite your friends"),
+
+    // File errors (2200-2299)
+    FILE_NOT_FOUND(2200, "File not found"),
+    FILE_UPLOAD_FAILED(2201, "File upload failed"),
+    INVALID_FILE_TYPE(2202, "Invalid file type"),
+    FILE_TOO_LARGE(2203, "File is too large"),
+
     // Server errors (5000+)
     INTERNAL_ERROR(5000, "Internal server error")
 }

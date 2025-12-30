@@ -70,3 +70,6 @@ kapt/
 # Local development
 local.properties
 secrets.properties
+
+# Uploaded files
+uploads/
