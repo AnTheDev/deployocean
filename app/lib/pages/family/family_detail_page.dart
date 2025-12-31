@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/models/family_model.dart';
 import 'package:flutter_boilerplate/providers/family_provider.dart';
 import 'package:flutter_boilerplate/providers/base_provider.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_boilerplate/pages/shopping/shopping_list_page.dart';
 import 'package:flutter_boilerplate/pages/meal_plan/meal_plan_page.dart';
 import 'package:flutter_boilerplate/services/api/api_service.dart';
 import 'package:flutter_boilerplate/services/locator.dart';
+import 'package:flutter_boilerplate/constants/api_config.dart';
 
 class FamilyDetailPage extends StatefulWidget {
   final int familyId;
@@ -20,6 +23,8 @@ class FamilyDetailPage extends StatefulWidget {
 class _FamilyDetailPageState extends State<FamilyDetailPage> {
   final ApiService _apiService = locator<ApiService>();
   bool _isGeneratingCode = false;
+  bool _isUpdatingImage = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -27,6 +32,133 @@ class _FamilyDetailPageState extends State<FamilyDetailPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<FamilyProvider>().selectFamily(widget.familyId);
     });
+  }
+
+  void _showImageOptions(Family family) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              if (!kIsWeb)
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Chụp ảnh'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _pickAndUpdateImage(family, ImageSource.camera);
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Chọn từ thư viện'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickAndUpdateImage(family, ImageSource.gallery);
+                },
+              ),
+              if (family.avatarUrl != null)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text('Xóa ảnh', style: TextStyle(color: Colors.red)),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _deleteImage(family);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndUpdateImage(Family family, ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        setState(() => _isUpdatingImage = true);
+        
+        final success = await context.read<FamilyProvider>().updateFamily(
+          family.id,
+          {'name': family.name},
+          image: image,
+        );
+        
+        if (mounted) {
+          setState(() => _isUpdatingImage = false);
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Đã cập nhật ảnh nhóm'), backgroundColor: Colors.green),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.read<FamilyProvider>().errorMessage ?? 'Cập nhật ảnh thất bại'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUpdatingImage = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteImage(Family family) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa ảnh nhóm'),
+        content: const Text('Bạn có chắc muốn xóa ảnh của nhóm này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Xóa', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isUpdatingImage = true);
+      
+      final success = await context.read<FamilyProvider>().deleteImage(family.id);
+      
+      if (mounted) {
+        setState(() => _isUpdatingImage = false);
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã xóa ảnh nhóm'), backgroundColor: Colors.green),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.read<FamilyProvider>().errorMessage ?? 'Xóa ảnh thất bại'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _showInviteDialog(Family family) async {
@@ -257,16 +389,44 @@ class _FamilyDetailPageState extends State<FamilyDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: orangeColor.withOpacity(0.2),
-                    backgroundImage: family.avatarUrl != null 
-                        ? NetworkImage(family.avatarUrl!) 
-                        : null,
-                    child: family.avatarUrl == null 
-                        ? Icon(Icons.group, size: 60, color: orangeColor) 
-                        : null,
+                  // Avatar with edit option
+                  GestureDetector(
+                    onTap: () => _showImageOptions(family),
+                    child: Stack(
+                      children: [
+                        _isUpdatingImage
+                            ? CircleAvatar(
+                                radius: 60,
+                                backgroundColor: orangeColor.withOpacity(0.2),
+                                child: const CircularProgressIndicator(),
+                              )
+                            : CircleAvatar(
+                                radius: 60,
+                                backgroundColor: orangeColor.withOpacity(0.2),
+                                backgroundImage: ApiConfig.getImageUrl(family.avatarUrl) != null 
+                                    ? NetworkImage(ApiConfig.getImageUrl(family.avatarUrl)!) 
+                                    : null,
+                                child: family.avatarUrl == null 
+                                    ? Icon(Icons.group, size: 60, color: orangeColor) 
+                                    : null,
+                              ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: orangeColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(height: 8),
+                  const Text('Nhấn để thay đổi ảnh', style: TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 16),
 
                   // Members Section
@@ -293,11 +453,11 @@ class _FamilyDetailPageState extends State<FamilyDetailPage> {
                             padding: const EdgeInsets.only(right: 12),
                             child: Column(
                               children: [
-                                CircleAvatar(
+                              CircleAvatar(
                                   radius: 28,
                                   backgroundColor: Colors.grey[200],
-                                  backgroundImage: member.avatarUrl != null
-                                      ? NetworkImage(member.avatarUrl!)
+                                  backgroundImage: ApiConfig.getImageUrl(member.avatarUrl) != null
+                                      ? NetworkImage(ApiConfig.getImageUrl(member.avatarUrl)!)
                                       : null,
                                   child: member.avatarUrl == null
                                       ? Text(

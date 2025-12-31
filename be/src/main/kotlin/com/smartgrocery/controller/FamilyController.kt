@@ -88,6 +88,15 @@ class FamilyController(
         return ResponseEntity.ok(ApiResponse.success(family, "Family updated successfully"))
     }
 
+    @DeleteMapping("/{id}/image")
+    @Operation(summary = "Delete family image (Leader only)")
+    fun deleteFamilyImage(
+        @PathVariable id: Long
+    ): ResponseEntity<ApiResponse<FamilyResponse>> {
+        val family = familyService.deleteFamilyImage(id)
+        return ResponseEntity.ok(ApiResponse.success(family, "Family image deleted successfully"))
+    }
+
     @PatchMapping("/{familyId}/members/{userId}")
     @Operation(summary = "Update a family member (Leader only)")
     fun updateMember(

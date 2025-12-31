@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/constants/api_config.dart';
 import 'package:flutter_boilerplate/models/auth_model.dart';
 import 'package:flutter_boilerplate/models/family_model.dart';
@@ -149,16 +150,45 @@ class ApiService {
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 
-  Future<Family> createFamily(Map<String, dynamic> data) async {
+  Future<Family> createFamily(Map<String, dynamic> data, {XFile? image}) async {
     try {
-      final formData = FormData.fromMap({
+      final Map<String, dynamic> formMap = {
         'name': data['name'],
         if (data['description'] != null) 'description': data['description'],
         if (data['friendIds'] != null && (data['friendIds'] as List).isNotEmpty)
           'friendIds': (data['friendIds'] as List).map((id) => id.toString()).toList(),
-      });
+      };
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        formMap['image'] = MultipartFile.fromBytes(bytes, filename: image.name);
+      }
+      
+      final formData = FormData.fromMap(formMap);
       final response = await _dio.post(
         ApiConfig.families,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      return Family.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<Family> updateFamilyWithImage(int id, Map<String, dynamic> data, {XFile? image}) async {
+    try {
+      final Map<String, dynamic> formMap = {
+        if (data['name'] != null) 'name': data['name'],
+        if (data['description'] != null) 'description': data['description'],
+      };
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        formMap['image'] = MultipartFile.fromBytes(bytes, filename: image.name);
+      }
+      
+      final formData = FormData.fromMap(formMap);
+      final response = await _dio.put(
+        ApiConfig.familyById(id),
         data: formData,
         options: Options(contentType: 'multipart/form-data'),
       );
@@ -176,6 +206,13 @@ class ApiService {
   Future<void> deleteFamily(int id) async {
     try {
       await _dio.delete(ApiConfig.familyById(id));
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<Family> deleteFamilyImage(int familyId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.familyImage(familyId));
+      return Family.fromJson(response.data['data']);
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 
@@ -197,7 +234,7 @@ class ApiService {
 
   Future<void> leaveFamily(int familyId) async {
     try {
-      await _dio.delete(ApiConfig.leaveFamily(familyId));
+      await _dio.post(ApiConfig.leaveFamily(familyId));
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 

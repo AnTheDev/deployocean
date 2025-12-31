@@ -30,8 +30,8 @@ class FamilyService(
 
         val inviteCode = generateInviteCode()
 
-        // Temporarily disable image upload for debugging
-        val imageUrl: String? = null // image?.let { fileStorageService.storeFile(it, "families") }
+        // Store image if provided
+        val imageUrl: String? = image?.let { fileStorageService.storeFile(it, "families") }
 
         val family = Family(
             name = request.name,
@@ -369,6 +369,26 @@ class FamilyService(
             }
             family.imageUrl = fileStorageService.storeFile(it, "families")
         }
+
+        val savedFamily = familyRepository.save(family)
+        val memberCount = familyMemberRepository.findByFamilyIdWithUsers(familyId).size
+
+        return toFamilyResponse(savedFamily, memberCount)
+    }
+
+    @Transactional
+    fun deleteFamilyImage(familyId: Long): FamilyResponse {
+        val currentUser = getCurrentUser()
+        checkLeaderPermission(familyId, currentUser.id)
+
+        val family =
+            familyRepository.findById(familyId).orElseThrow { ResourceNotFoundException(ErrorCode.FAMILY_NOT_FOUND) }
+
+        // Delete image if exists
+        family.imageUrl?.let { imageUrl ->
+            fileStorageService.deleteFile(imageUrl)
+        }
+        family.imageUrl = null
 
         val savedFamily = familyRepository.save(family)
         val memberCount = familyMemberRepository.findByFamilyIdWithUsers(familyId).size

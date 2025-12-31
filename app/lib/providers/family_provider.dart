@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/models/family_model.dart';
 import 'package:flutter_boilerplate/models/family_invitation_model.dart';
 import 'package:flutter_boilerplate/providers/base_provider.dart';
@@ -63,12 +63,34 @@ class FamilyProvider extends BaseProvider {
   }
 
   /// Creates a new family and then refetches the list of families.
-  Future<bool> createFamily(Map<String, dynamic> familyData) async {
+  Future<bool> createFamily(Map<String, dynamic> familyData, {XFile? image}) async {
     _errorMessage = null;
     try {
-      final newFamily = await _apiService.createFamily(familyData);
+      final newFamily = await _apiService.createFamily(familyData, image: image);
       _families.insert(0, newFamily);
       _selectedFamily = newFamily;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Updates a family with optional image
+  Future<bool> updateFamily(int familyId, Map<String, dynamic> familyData, {XFile? image}) async {
+    _errorMessage = null;
+    try {
+      final updatedFamily = await _apiService.updateFamilyWithImage(familyId, familyData, image: image);
+      // Update in local list
+      final index = _families.indexWhere((f) => f.id == familyId);
+      if (index != -1) {
+        _families[index] = updatedFamily;
+      }
+      if (_selectedFamily?.id == familyId) {
+        _selectedFamily = updatedFamily;
+      }
       notifyListeners();
       return true;
     } catch (e) {
@@ -100,6 +122,28 @@ class FamilyProvider extends BaseProvider {
       _families.removeWhere((f) => f.id == familyId);
       if (_selectedFamily?.id == familyId) {
         _selectedFamily = _families.isNotEmpty ? _families.first : null;
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Deletes the family image
+  Future<bool> deleteImage(int familyId) async {
+    _errorMessage = null;
+    try {
+      final updatedFamily = await _apiService.deleteFamilyImage(familyId);
+      // Update in local list
+      final index = _families.indexWhere((f) => f.id == familyId);
+      if (index != -1) {
+        _families[index] = updatedFamily;
+      }
+      if (_selectedFamily?.id == familyId) {
+        _selectedFamily = updatedFamily;
       }
       notifyListeners();
       return true;
