@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 
 @Service
 class AuthService(
@@ -22,7 +23,8 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val authenticationManager: AuthenticationManager,
     private val jwtTokenProvider: JwtTokenProvider,
-    private val jwtConfig: JwtConfig
+    private val jwtConfig: JwtConfig,
+    private val fileStorageService: FileStorageService
 ) {
 
     @Transactional
@@ -166,12 +168,53 @@ class AuthService(
         userRepository.save(user)
     }
 
+    @Transactional
+    fun uploadAvatar(file: MultipartFile): UserResponse {
+        val authentication = SecurityContextHolder.getContext().authentication
+        val userDetails = authentication.principal as CustomUserDetails
+
+        val user = userRepository.findById(userDetails.id)
+            .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
+
+        // Delete old avatar if exists
+        user.avatarUrl?.let { oldPath ->
+            fileStorageService.deleteFile(oldPath)
+        }
+
+        // Store new avatar
+        val avatarPath = fileStorageService.storeFile(file, "users")
+        user.avatarUrl = avatarPath
+
+        val savedUser = userRepository.save(user)
+        return toUserResponse(savedUser)
+    }
+
+    @Transactional
+    fun deleteAvatar(): UserResponse {
+        val authentication = SecurityContextHolder.getContext().authentication
+        val userDetails = authentication.principal as CustomUserDetails
+
+        val user = userRepository.findById(userDetails.id)
+            .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
+
+        // Delete avatar file if exists
+        user.avatarUrl?.let { oldPath ->
+            fileStorageService.deleteFile(oldPath)
+        }
+
+        user.avatarUrl = null
+
+        val savedUser = userRepository.save(user)
+        return toUserResponse(savedUser)
+    }
+
     private fun toUserResponse(user: User): UserResponse {
         return UserResponse(
             id = user.id!!,
             username = user.username,
             email = user.email,
             fullName = user.fullName,
+            avatarUrl = user.avatarUrl?.let { "/files/$it" },
             isActive = user.isActive,
             roles = user.roles.map { it.name })
     }

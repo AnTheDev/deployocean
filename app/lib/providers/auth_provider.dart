@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/models/auth_model.dart';
 import 'package:flutter_boilerplate/services/api/api_service.dart';
 import 'package:flutter_boilerplate/services/locator.dart';
@@ -24,6 +25,31 @@ class AuthProvider extends ChangeNotifier {
       _token = storedToken;
       _userInfo = UserInfo.fromJson(storedUserInfo);
       notifyListeners();
+    }
+  }
+
+  Future<void> register({
+    required String fullName,
+    required String username,
+    required String email,
+    required String password,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _apiService.register(
+        fullName: fullName,
+        username: username,
+        email: email,
+        password: password,
+      );
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
     }
   }
 
@@ -63,5 +89,50 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = false;
     await SharedPref.clear();
     notifyListeners();
+  }
+
+  Future<void> uploadAvatar(XFile image) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final updatedUser = await _apiService.uploadUserAvatar(image);
+      _userInfo = updatedUser;
+      await SharedPref.saveUserInfo(updatedUser.toJson());
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAvatar() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final updatedUser = await _apiService.deleteUserAvatar();
+      _userInfo = updatedUser;
+      await SharedPref.saveUserInfo(updatedUser.toJson());
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> refreshUserInfo() async {
+    try {
+      final user = await _apiService.getCurrentUser();
+      _userInfo = user;
+      await SharedPref.saveUserInfo(user.toJson());
+      notifyListeners();
+    } catch (e) {
+      // Silent fail - user info refresh is not critical
+    }
   }
 }

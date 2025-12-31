@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/providers/family_provider.dart';
 import 'package:flutter_boilerplate/providers/friend_provider.dart';
 import 'package:flutter_boilerplate/models/auth_model.dart';
@@ -17,6 +20,9 @@ class _CreateFamilyPageState extends State<CreateFamilyPage> {
   final _membersController = TextEditingController();
   bool _isLoading = false;
   final List<UserInfo> _selectedMembers = [];
+  XFile? _selectedImage;
+  Uint8List? _selectedImageBytes; // For displaying image on web
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -41,7 +47,7 @@ class _CreateFamilyPageState extends State<CreateFamilyPage> {
       };
 
       try {
-        await context.read<FamilyProvider>().createFamily(familyData);
+        await context.read<FamilyProvider>().createFamily(familyData, image: _selectedImage);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Tạo nhóm thành công!'), backgroundColor: Colors.green),
@@ -60,6 +66,73 @@ class _CreateFamilyPageState extends State<CreateFamilyPage> {
         }
       }
     }
+  }
+
+  Future<void> _pickImage() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              if (!kIsWeb) // Camera not supported on web
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Chụp ảnh'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final XFile? photo = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      maxWidth: 800,
+                      maxHeight: 800,
+                      imageQuality: 85,
+                    );
+                    if (photo != null) {
+                      final bytes = await photo.readAsBytes();
+                      setState(() {
+                        _selectedImage = photo;
+                        _selectedImageBytes = bytes;
+                      });
+                    }
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Chọn từ thư viện'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final XFile? image = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                    maxWidth: 800,
+                    maxHeight: 800,
+                    imageQuality: 85,
+                  );
+                  if (image != null) {
+                    final bytes = await image.readAsBytes();
+                    setState(() {
+                      _selectedImage = image;
+                      _selectedImageBytes = bytes;
+                    });
+                  }
+                },
+              ),
+              if (_selectedImage != null)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text('Xóa ảnh', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _selectedImage = null;
+                      _selectedImageBytes = null;
+                    });
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showMemberSelectionDialog() {
@@ -139,15 +212,43 @@ class _CreateFamilyPageState extends State<CreateFamilyPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 20),
-              // RESTORED: Avatar
+              // Avatar with image picker
               Center(
-                child: CircleAvatar(
-                  radius: 70,
-                  backgroundColor: Colors.grey[200],
-                  child: const Text('Avatar nhóm', style: TextStyle(color: Colors.grey)),
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 70,
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage: _selectedImageBytes != null 
+                            ? MemoryImage(_selectedImageBytes!) 
+                            : null,
+                        child: _selectedImage == null
+                            ? const Icon(Icons.group, size: 50, color: Colors.grey)
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: orangeColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 8),
+              const Center(
+                child: Text('Nhấn để chọn ảnh', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              ),
+              const SizedBox(height: 32),
 
               // RESTORED: Group Name field
               const Text('Tên nhóm', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

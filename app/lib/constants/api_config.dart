@@ -18,10 +18,43 @@ class ApiConfig {
     return base + apiVersion;
   }
 
+  /// Base URL without API version for file serving
+  static String get fileBaseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8080';
+    } else {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:8080';
+      } else {
+        return 'http://127.0.0.1:8080';
+      }
+    }
+  }
+
+  /// Build full URL for an image path returned from API
+  /// The API returns paths like "/files/families/uuid.jpg"
+  static String? getImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return null;
+    // If already a full URL, return as-is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    return '$fileBaseUrl$imagePath';
+  }
+
   // --- Auth & User ---
   static const String login = '/auth/login';
   static const String register = '/auth/register';
+  static const String me = '/auth/me';
+  static const String userAvatar = '/auth/me/avatar';
   static const String userSearch = '/users/search';
+
+  // --- Notification Endpoints ---
+  static const String notifications = '/notifications';
+  static const String notificationCount = '/notifications/count';
+  static const String notificationMarkRead = '/notifications/mark-read';
+  static const String notificationMarkAllRead = '/notifications/mark-all-read';
+  static String notificationById(int id) => '/notifications/$id';
 
   // --- Friend Endpoints ---
   static const String friends = '/friends';
@@ -39,12 +72,13 @@ class ApiConfig {
   static const String familyInvitations = '/families/invitations';
   static String respondToFamilyInvitation(int id) => '/families/invitations/$id/respond';
   static String familyById(int id) => '/families/$id';
+  static String familyImage(int id) => '/families/$id/image';
   static String familyMembers(int id) => '/families/$id/members';
   static String leaveFamily(int id) => '/families/$id/leave';
   static String familyInviteCode(int id) => '/families/$id/invite-code';
   static String regenerateInviteCode(int id) => '/families/$id/regenerate-invite-code';
   static String familyMember(int familyId, int userId) => '/families/$familyId/members/$userId';
-  static String inviteFriendToFamily(int familyId) => '/families/$familyId/invite';
+  static String inviteFriendToFamily(int familyId, int friendId) => '/families/$familyId/invite/$friendId';
 
   // --- Fridge Endpoints ---
   static const String fridgeItems = '/fridge-items';

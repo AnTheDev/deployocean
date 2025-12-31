@@ -21,6 +21,9 @@ class User(
     @Column(name = "full_name", nullable = false, length = 100)
     var fullName: String,
 
+    @Column(name = "avatar_url", length = 500)
+    var avatarUrl: String? = null,
+
     @Column(name = "fcm_token", length = 255)
     var fcmToken: String? = null,
 

@@ -8,6 +8,7 @@ class UserInfo {
   final String username;
   final String email;
   final String fullName;
+  final String? avatarUrl;
   final bool? isActive;
   // FIX: Made roles nullable and provided a default value.
   final List<String>? roles;
@@ -19,6 +20,7 @@ class UserInfo {
     required this.username,
     required this.email,
     required this.fullName,
+    this.avatarUrl,
     this.isActive = false,
     this.roles = const [], // Default to an empty list if not provided
   });

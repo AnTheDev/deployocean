@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/constants/api_config.dart';
 import 'package:flutter_boilerplate/models/auth_model.dart';
 import 'package:flutter_boilerplate/models/family_invitation_model.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_boilerplate/models/fridge_item.dart';
 import 'package:flutter_boilerplate/models/meal_plan_model.dart';
 import 'package:flutter_boilerplate/models/recipe_model.dart';
 import 'package:flutter_boilerplate/models/shopping_list_model.dart';
+import 'package:flutter_boilerplate/models/meal_plan_model.dart';
+import 'package:flutter_boilerplate/models/notification_model.dart';
 import 'package:flutter_boilerplate/services/shared_pref/shared_pref.dart';
 
 class ApiService {
@@ -38,6 +41,22 @@ class ApiService {
   }
 
   // --- Auth & User ---
+  Future<void> register({
+    required String fullName,
+    required String username,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _dio.post(ApiConfig.register, data: {
+        'fullName': fullName,
+        'username': username,
+        'email': email,
+        'password': password,
+      });
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
   Future<LoginData> login({required String username, required String password, String? deviceToken}) async {
     try {
       final response = await _dio.post(ApiConfig.login, data: {'username': username, 'password': password, if (deviceToken != null) 'device_token': deviceToken});
@@ -53,6 +72,86 @@ class ApiService {
         return (paginatedData['content'] as List).map((i) => UserInfo.fromJson(i)).toList();
       }
       return [];
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<UserInfo> getCurrentUser() async {
+    try {
+      final response = await _dio.get(ApiConfig.me);
+      return UserInfo.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<UserInfo> uploadUserAvatar(XFile image) async {
+    try {
+      final bytes = await image.readAsBytes();
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: image.name,
+        ),
+      });
+      final response = await _dio.post(
+        ApiConfig.userAvatar,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      return UserInfo.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<UserInfo> deleteUserAvatar() async {
+    try {
+      final response = await _dio.delete(ApiConfig.userAvatar);
+      return UserInfo.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  // --- Notification APIs ---
+  Future<PaginatedNotifications> getNotifications({int page = 0, int size = 20, bool unreadOnly = false}) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.notifications,
+        queryParameters: {'page': page, 'size': size, 'unreadOnly': unreadOnly},
+      );
+      return PaginatedNotifications.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<NotificationCount> getNotificationCount() async {
+    try {
+      final response = await _dio.get(ApiConfig.notificationCount);
+      return NotificationCount.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> markNotificationsAsRead(List<int> ids) async {
+    try {
+      await _dio.post(ApiConfig.notificationMarkRead, data: {'notificationIds': ids, 'isRead': true});
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> markNotificationsAsUnread(List<int> ids) async {
+    try {
+      await _dio.post(ApiConfig.notificationMarkRead, data: {'notificationIds': ids, 'isRead': false});
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> markAllNotificationsAsRead() async {
+    try {
+      await _dio.post(ApiConfig.notificationMarkAllRead);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> deleteNotification(int id) async {
+    try {
+      await _dio.delete(ApiConfig.notificationById(id));
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> deleteAllNotifications() async {
+    try {
+      await _dio.delete(ApiConfig.notifications);
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 
@@ -124,14 +223,84 @@ class ApiService {
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 
-  Future<Family> createFamily(Map<String, dynamic> data) async {
+  Future<Family> createFamily(Map<String, dynamic> data, {XFile? image}) async {
     try {
       final response = await _dio.post(ApiConfig.families, data: data);
+      final Map<String, dynamic> formMap = {
+        'name': data['name'],
+        if (data['description'] != null) 'description': data['description'],
+        if (data['friendIds'] != null && (data['friendIds'] as List).isNotEmpty)
+          'friendIds': (data['friendIds'] as List).map((id) => id.toString()).toList(),
+      };
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        formMap['image'] = MultipartFile.fromBytes(bytes, filename: image.name);
+      }
+      
+      final formData = FormData.fromMap(formMap);
+      final response = await _dio.post(
+        ApiConfig.families,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
       return Family.fromJson(response.data['data']);
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 
    Future<Family> joinFamily(String inviteCode) async {
+  Future<Family> updateFamilyWithImage(int id, Map<String, dynamic> data, {XFile? image}) async {
+    try {
+      final Map<String, dynamic> formMap = {
+        if (data['name'] != null) 'name': data['name'],
+        if (data['description'] != null) 'description': data['description'],
+      };
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        formMap['image'] = MultipartFile.fromBytes(bytes, filename: image.name);
+      }
+      
+      final formData = FormData.fromMap(formMap);
+      final response = await _dio.put(
+        ApiConfig.familyById(id),
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      return Family.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<Family> updateFamily(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.put(ApiConfig.familyById(id), data: data);
+      return Family.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> deleteFamily(int id) async {
+    try {
+      await _dio.delete(ApiConfig.familyById(id));
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<Family> deleteFamilyImage(int familyId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.familyImage(familyId));
+      return Family.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<List<FamilyMember>> getFamilyMembers(int familyId) async {
+    try {
+      final response = await _dio.get(ApiConfig.familyMembers(familyId));
+      final data = response.data['data'];
+      if (data == null) return [];
+      return (data as List).map((i) => FamilyMember.fromJson(i)).toList();
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<Family> joinFamily(String inviteCode) async {
     try {
       final response = await _dio.post(ApiConfig.joinFamily, data: {'inviteCode': inviteCode});
       return Family.fromJson(response.data['data']);
@@ -144,6 +313,32 @@ class ApiService {
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<String> generateInviteCode(int familyId) async {
+    try {
+      // Lấy thông tin family để lấy invite code có sẵn
+      final response = await _dio.get(ApiConfig.familyById(familyId));
+      return response.data['data']['inviteCode'] ?? '';
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<String> regenerateInviteCode(int familyId) async {
+    try {
+      final response = await _dio.post(ApiConfig.regenerateInviteCode(familyId));
+      return response.data['data']['inviteCode'] ?? '';
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<FamilyInvitation> inviteFriendToFamily(int familyId, int friendId) async {
+    try {
+      final response = await _dio.post(ApiConfig.inviteFriendToFamily(familyId, friendId));
+      return FamilyInvitation.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  // --- Family Invitation APIs ---
   Future<List<FamilyInvitation>> getFamilyInvitations() async {
      try {
       final response = await _dio.get(ApiConfig.familyInvitations);

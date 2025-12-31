@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/providers/auth_provider.dart';
 import 'package:flutter_boilerplate/providers/friend_provider.dart';
 import 'package:flutter_boilerplate/providers/base_provider.dart';
 import 'package:flutter_boilerplate/models/auth_model.dart';
 import 'package:flutter_boilerplate/models/friend_model.dart';
 import 'package:flutter_boilerplate/pages/auth/landing_page.dart';
+import 'package:flutter_boilerplate/constants/api_config.dart';
 import 'user_search_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -74,12 +76,48 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     if (userInfo == null) {
       return const Center(child: CircularProgressIndicator());
     }
+    final avatarUrl = ApiConfig.getImageUrl(userInfo.avatarUrl);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
       child: Column(
         children: [
-          const CircleAvatar(radius: 50, backgroundColor: Color(0xFFF0F0F0), child: Icon(Icons.person, size: 50, color: Colors.grey)),
-          const SizedBox(height: 32),
+          GestureDetector(
+            onTap: () => _showAvatarOptions(context),
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: const Color(0xFFF0F0F0),
+                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                  child: avatarUrl == null
+                      ? Text(
+                          userInfo.fullName.isNotEmpty ? userInfo.fullName[0].toUpperCase() : '?',
+                          style: const TextStyle(fontSize: 40, color: Colors.grey),
+                        )
+                      : null,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF26F21),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Nhấn để thay đổi ảnh đại diện',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 24),
           _buildInfoRow(label: 'Tên tài khoản', value: userInfo.fullName),
           _buildInfoRow(label: 'Email', value: userInfo.email),
           const SizedBox(height: 40),
@@ -95,6 +133,109 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         ],
       ),
     );
+  }
+
+  void _showAvatarOptions(BuildContext context) {
+    final authProvider = context.read<AuthProvider>();
+    final hasAvatar = authProvider.userInfo?.avatarUrl != null;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Color(0xFFF26F21)),
+              title: const Text('Chọn từ thư viện'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadAvatar(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFFF26F21)),
+              title: const Text('Chụp ảnh mới'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadAvatar(ImageSource.camera);
+              },
+            ),
+            if (hasAvatar)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Xóa ảnh đại diện', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _deleteAvatar();
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: const Text('Hủy'),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadAvatar(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512, imageQuality: 80);
+    if (pickedFile != null) {
+      try {
+        await context.read<AuthProvider>().uploadAvatar(pickedFile);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cập nhật ảnh đại diện thành công!'), backgroundColor: Colors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi: ${e.toString()}'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _deleteAvatar() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xác nhận'),
+        content: const Text('Bạn có chắc muốn xóa ảnh đại diện?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      try {
+        await context.read<AuthProvider>().deleteAvatar();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã xóa ảnh đại diện!'), backgroundColor: Colors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi: ${e.toString()}'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
   }
 
   // Tab 2: Friends List - Restored

@@ -11,6 +11,7 @@ UserInfo _$UserInfoFromJson(Map<String, dynamic> json) => UserInfo(
       username: json['username'] as String,
       email: json['email'] as String,
       fullName: json['fullName'] as String,
+      avatarUrl: json['avatarUrl'] as String?,
       isActive: json['isActive'] as bool? ?? false,
       roles:
           (json['roles'] as List<dynamic>?)?.map((e) => e as String).toList() ??
@@ -22,6 +23,7 @@ Map<String, dynamic> _$UserInfoToJson(UserInfo instance) => <String, dynamic>{
       'username': instance.username,
       'email': instance.email,
       'fullName': instance.fullName,
+      'avatarUrl': instance.avatarUrl,
       'isActive': instance.isActive,
       'roles': instance.roles,
     };

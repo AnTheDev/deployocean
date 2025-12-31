@@ -7,6 +7,7 @@ import 'package:flutter_boilerplate/pages/family/create_family_page.dart';
 import 'package:flutter_boilerplate/pages/family/join_family_page.dart';
 import 'package:flutter_boilerplate/pages/family/family_invitations_page.dart';
 import 'package:flutter_boilerplate/models/family_model.dart';
+import 'package:flutter_boilerplate/constants/api_config.dart';
 
 class FamilyListPage extends StatefulWidget {
   const FamilyListPage({Key? key}) : super(key: key);
@@ -255,8 +256,12 @@ class FamilyListItem extends StatelessWidget {
               CircleAvatar(
                 radius: 35,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: family.avatarUrl != null ? NetworkImage(family.avatarUrl!) : null,
-                child: family.avatarUrl == null ? const Text('Avatar nhóm', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 10)) : null,
+                backgroundImage: ApiConfig.getImageUrl(family.avatarUrl) != null 
+                    ? NetworkImage(ApiConfig.getImageUrl(family.avatarUrl)!) 
+                    : null,
+                child: family.avatarUrl == null 
+                    ? const Icon(Icons.group, size: 30, color: Colors.grey) 
+                    : null,
               ),
               const SizedBox(width: 16),
               Column(

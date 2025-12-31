@@ -45,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final orangeColor = const Color(0xFFF26F21);
-    final isLoading = context.watch<AuthProvider>().viewStatus == ViewStatus.Loading;
+    final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,
