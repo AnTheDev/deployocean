@@ -9,6 +9,7 @@ import 'package:flutter_boilerplate/models/fridge_item.dart';
 import 'package:flutter_boilerplate/models/recipe_model.dart';
 import 'package:flutter_boilerplate/models/shopping_list_model.dart';
 import 'package:flutter_boilerplate/models/meal_plan_model.dart';
+import 'package:flutter_boilerplate/models/notification_model.dart';
 import 'package:flutter_boilerplate/services/shared_pref/shared_pref.dart';
 
 class ApiService {
@@ -103,6 +104,54 @@ class ApiService {
     try {
       final response = await _dio.delete(ApiConfig.userAvatar);
       return UserInfo.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  // --- Notification APIs ---
+  Future<PaginatedNotifications> getNotifications({int page = 0, int size = 20, bool unreadOnly = false}) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.notifications,
+        queryParameters: {'page': page, 'size': size, 'unreadOnly': unreadOnly},
+      );
+      return PaginatedNotifications.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<NotificationCount> getNotificationCount() async {
+    try {
+      final response = await _dio.get(ApiConfig.notificationCount);
+      return NotificationCount.fromJson(response.data['data']);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> markNotificationsAsRead(List<int> ids) async {
+    try {
+      await _dio.post(ApiConfig.notificationMarkRead, data: {'notificationIds': ids, 'isRead': true});
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> markNotificationsAsUnread(List<int> ids) async {
+    try {
+      await _dio.post(ApiConfig.notificationMarkRead, data: {'notificationIds': ids, 'isRead': false});
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> markAllNotificationsAsRead() async {
+    try {
+      await _dio.post(ApiConfig.notificationMarkAllRead);
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> deleteNotification(int id) async {
+    try {
+      await _dio.delete(ApiConfig.notificationById(id));
+    } on DioException catch (e) { throw _handleDioError(e); }
+  }
+
+  Future<void> deleteAllNotifications() async {
+    try {
+      await _dio.delete(ApiConfig.notifications);
     } on DioException catch (e) { throw _handleDioError(e); }
   }
 

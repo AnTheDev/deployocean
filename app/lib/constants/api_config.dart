@@ -49,6 +49,13 @@ class ApiConfig {
   static const String userAvatar = '/auth/me/avatar';
   static const String userSearch = '/users/search';
 
+  // --- Notification Endpoints ---
+  static const String notifications = '/notifications';
+  static const String notificationCount = '/notifications/count';
+  static const String notificationMarkRead = '/notifications/mark-read';
+  static const String notificationMarkAllRead = '/notifications/mark-all-read';
+  static String notificationById(int id) => '/notifications/$id';
+
   // --- Friend Endpoints ---
   static const String friends = '/friends';
   static const String friendRequests = '/friends/requests';

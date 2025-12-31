@@ -4,6 +4,7 @@ import 'package:flutter_boilerplate/providers/auth_provider.dart';
 import 'package:flutter_boilerplate/providers/family_provider.dart';
 import 'package:flutter_boilerplate/pages/shopping/shopping_list_page.dart';
 import 'package:flutter_boilerplate/pages/meal_plan/meal_plan_page.dart';
+import 'package:flutter_boilerplate/components/common/notification_badge.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -19,6 +20,9 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: const [
+          NotificationBadge(iconColor: Colors.white),
+        ],
       ),
       body: userInfo == null
           ? const Center(child: CircularProgressIndicator())
