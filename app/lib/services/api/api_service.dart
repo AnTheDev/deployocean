@@ -9,6 +9,7 @@ import 'package:flutter_boilerplate/models/fridge_item.dart';
 import 'package:flutter_boilerplate/models/fridge_statistics.dart';
 import 'package:flutter_boilerplate/models/meal_plan_model.dart';
 import 'package:flutter_boilerplate/models/notification_model.dart';
+import 'package:flutter_boilerplate/models/product_model.dart';
 import 'package:flutter_boilerplate/models/recipe_model.dart';
 import 'package:flutter_boilerplate/models/shopping_list_model.dart';
 import 'package:flutter_boilerplate/services/shared_pref/shared_pref.dart';
@@ -791,6 +792,80 @@ class ApiService {
   Future<void> deleteNotification(int id) async {
     try {
       await _dio.delete(ApiConfig.notificationById(id));
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // --- Product APIs ---
+  Future<List<Product>> getProducts({int page = 0, int size = 20}) async {
+    try {
+      final response = await _dio.get(ApiConfig.products, queryParameters: {
+        'page': page,
+        'size': size,
+      });
+      final data = response.data['data'];
+      if (data == null) return [];
+      // Handle paginated response
+      if (data is Map && data['content'] != null) {
+        return (data['content'] as List).map((i) => Product.fromJson(i)).toList();
+      }
+      if (data is List) {
+        return data.map((i) => Product.fromJson(i)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Product> getProductById(int id) async {
+    try {
+      final response = await _dio.get(ApiConfig.productById(id));
+      return Product.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<Product>> searchProducts(String name, {int page = 0, int size = 20}) async {
+    try {
+      final response = await _dio.get(ApiConfig.searchProducts, queryParameters: {
+        'name': name,
+        'page': page,
+        'size': size,
+      });
+      final data = response.data['data'];
+      if (data == null) return [];
+      // Handle paginated response
+      if (data is Map && data['content'] != null) {
+        return (data['content'] as List).map((i) => Product.fromJson(i)).toList();
+      }
+      if (data is List) {
+        return data.map((i) => Product.fromJson(i)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<Product>> getProductsByCategory(int categoryId, {int page = 0, int size = 20}) async {
+    try {
+      final response = await _dio.get(ApiConfig.productsByCategory(categoryId), queryParameters: {
+        'page': page,
+        'size': size,
+      });
+      final data = response.data['data'];
+      if (data == null) return [];
+      // Handle paginated response
+      if (data is Map && data['content'] != null) {
+        return (data['content'] as List).map((i) => Product.fromJson(i)).toList();
+      }
+      if (data is List) {
+        return data.map((i) => Product.fromJson(i)).toList();
+      }
+      return [];
     } on DioException catch (e) {
       throw _handleDioError(e);
     }

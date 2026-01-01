@@ -115,4 +115,10 @@ class ApiConfig {
   static String familyWeeklyMealPlans(int familyId) => '/families/$familyId/meal-plans/weekly';
   static String mealPlanItems(int mealPlanId) => '/meal-plans/$mealPlanId/items';
   static String mealItemById(int itemId) => '/meal-items/$itemId';
+
+  // --- Product Endpoints ---
+  static const String products = '/master-products';
+  static String productById(int id) => '/master-products/$id';
+  static const String searchProducts = '/master-products/search'; // query param: name
+  static String productsByCategory(int categoryId) => '/master-products/by-category/$categoryId';
 }

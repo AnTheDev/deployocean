@@ -16,6 +16,7 @@ import 'providers/recipe_provider.dart';
 import 'providers/shopping_list_provider.dart';
 import 'providers/meal_plan_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/product_provider.dart';
 import 'routes.dart';
 import 'services/locator.dart';
 import 'services/shared_pref/shared_pref.dart';
@@ -41,6 +42,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ShoppingListProvider()),
         ChangeNotifierProvider(create: (_) => MealPlanProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
       child: const MyApp(),
     ),

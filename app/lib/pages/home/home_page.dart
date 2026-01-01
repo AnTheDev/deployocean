@@ -4,6 +4,7 @@ import 'package:flutter_boilerplate/providers/auth_provider.dart';
 import 'package:flutter_boilerplate/providers/family_provider.dart';
 import 'package:flutter_boilerplate/pages/shopping/shopping_list_page.dart';
 import 'package:flutter_boilerplate/pages/meal_plan/meal_plan_page.dart';
+import 'package:flutter_boilerplate/pages/product/product_page.dart';
 import 'package:flutter_boilerplate/components/common/notification_badge.dart';
 
 class HomePage extends StatelessWidget {
@@ -122,6 +123,24 @@ class HomePage extends StatelessWidget {
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _FeatureCard(
+                                icon: Icons.inventory_2,
+                                title: 'Nguyên liệu',
+                                color: Colors.teal,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const ProductPage()),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(child: SizedBox()),
                           ],
                         ),
                         const SizedBox(height: 24),
