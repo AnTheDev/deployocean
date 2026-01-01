@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_boilerplate/constants/api_config.dart';
 import 'package:flutter_boilerplate/models/auth_model.dart';
@@ -6,6 +6,7 @@ import 'package:flutter_boilerplate/models/family_model.dart';
 import 'package:flutter_boilerplate/models/family_invitation_model.dart';
 import 'package:flutter_boilerplate/models/friend_model.dart';
 import 'package:flutter_boilerplate/models/fridge_item.dart';
+import 'package:flutter_boilerplate/models/fridge_statistics.dart';
 import 'package:flutter_boilerplate/models/meal_plan_model.dart';
 import 'package:flutter_boilerplate/models/notification_model.dart';
 import 'package:flutter_boilerplate/models/recipe_model.dart';
@@ -394,6 +395,93 @@ class ApiService {
   Future<void> deleteFridgeItem(int itemId) async {
     try {
       await _dio.delete(ApiConfig.fridgeItemById(itemId));
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<FridgeItem> updateFridgeItem(int itemId, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.patch(ApiConfig.fridgeItemById(itemId), data: data);
+      return FridgeItem.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<FridgeItem>> getActiveFridgeItems(int familyId, {int page = 0, int size = 20}) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.activeFridgeItems(familyId),
+        queryParameters: {'page': page, 'size': size},
+      );
+      final paginatedData = response.data['data'];
+      if (paginatedData != null && paginatedData['content'] is List) {
+        return (paginatedData['content'] as List).map((i) => FridgeItem.fromJson(i)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<FridgeItem>> getExpiringFridgeItems(int familyId, {int page = 0, int size = 20}) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.expiringFridgeItems(familyId),
+        queryParameters: {'page': page, 'size': size},
+      );
+      final paginatedData = response.data['data'];
+      if (paginatedData != null && paginatedData['content'] is List) {
+        return (paginatedData['content'] as List).map((i) => FridgeItem.fromJson(i)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<FridgeItem>> getExpiredFridgeItems(int familyId, {int page = 0, int size = 20}) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.expiredFridgeItems(familyId),
+        queryParameters: {'page': page, 'size': size},
+      );
+      final paginatedData = response.data['data'];
+      if (paginatedData != null && paginatedData['content'] is List) {
+        return (paginatedData['content'] as List).map((i) => FridgeItem.fromJson(i)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<FridgeStatistics> getFridgeStatistics(int familyId) async {
+    try {
+      final response = await _dio.get(ApiConfig.fridgeStatistics(familyId));
+      return FridgeStatistics.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<FridgeItem> consumeFridgeItem(int itemId, {double? quantityUsed}) async {
+    try {
+      final response = await _dio.post(
+        ApiConfig.consumeFridgeItem(itemId),
+        data: quantityUsed != null ? {'quantityUsed': quantityUsed} : null,
+      );
+      return FridgeItem.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<FridgeItem> discardFridgeItem(int itemId) async {
+    try {
+      final response = await _dio.post(ApiConfig.discardFridgeItem(itemId));
+      return FridgeItem.fromJson(response.data['data']);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }

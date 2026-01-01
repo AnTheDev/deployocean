@@ -4,7 +4,8 @@ import 'package:flutter_boilerplate/providers/fridge_provider.dart';
 import 'package:flutter_boilerplate/providers/family_provider.dart';
 import 'package:intl/intl.dart';
 
-enum FridgeLocation { FREEZER, FRIDGE, PANTRY }
+// FIX: Đổi FRIDGE thành COOLER để khớp với backend
+enum FridgeLocation { FREEZER, COOLER, PANTRY }
 
 class AddFridgeItemPage extends StatefulWidget {
   const AddFridgeItemPage({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class _AddFridgeItemPageState extends State<AddFridgeItemPage> {
   final _quantityController = TextEditingController();
   final _unitController = TextEditingController();
   DateTime? _expirationDate;
-  FridgeLocation _location = FridgeLocation.FRIDGE;
+  FridgeLocation _location = FridgeLocation.COOLER;
 
   @override
   void dispose() {
@@ -85,25 +86,126 @@ class _AddFridgeItemPageState extends State<AddFridgeItemPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Tên thực phẩm'), validator: (v) => v!.isEmpty ? 'Vui lòng nhập tên' : null),
-              TextFormField(controller: _quantityController, decoration: const InputDecoration(labelText: 'Số lượng'), keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: (v) => v!.isEmpty ? 'Vui lòng nhập số lượng' : null),
-              TextFormField(controller: _unitController, decoration: const InputDecoration(labelText: 'Đơn vị'), validator: (v) => v!.isEmpty ? 'Vui lòng nhập đơn vị' : null),
+              // Ghi chú về trường bắt buộc
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  '(*) Trường bắt buộc',
+                  style: TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Tên thực phẩm *',
+                  hintText: 'VD: Thịt bò, Rau cải, Sữa tươi...',
+                  helperText: 'Nhập tên thực phẩm bạn muốn thêm vào tủ lạnh',
+                ),
+                validator: (v) => v == null || v.trim().isEmpty ? 'Vui lòng nhập tên thực phẩm' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _quantityController,
+                decoration: const InputDecoration(
+                  labelText: 'Số lượng *',
+                  hintText: 'VD: 1, 2.5, 500...',
+                  helperText: 'Chỉ nhập số (có thể dùng số thập phân)',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Vui lòng nhập số lượng';
+                  }
+                  final number = double.tryParse(v.trim());
+                  if (number == null) {
+                    return 'Số lượng phải là số (VD: 1, 2.5, 100)';
+                  }
+                  if (number <= 0) {
+                    return 'Số lượng phải lớn hơn 0';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _unitController,
+                decoration: const InputDecoration(
+                  labelText: 'Đơn vị *',
+                  hintText: 'VD: kg, lít, gói, hộp, quả...',
+                  helperText: 'Đơn vị tính của thực phẩm',
+                ),
+                validator: (v) => v == null || v.trim().isEmpty ? 'Vui lòng nhập đơn vị' : null,
+              ),
               const SizedBox(height: 16),
               DropdownButtonFormField<FridgeLocation>(
                 value: _location,
-                decoration: const InputDecoration(labelText: 'Vị trí', border: OutlineInputBorder()),
-                items: FridgeLocation.values.map((loc) => DropdownMenuItem(value: loc, child: Text(loc.name))).toList(),
+                decoration: const InputDecoration(
+                  labelText: 'Vị trí *',
+                  border: OutlineInputBorder(),
+                  helperText: 'Chọn nơi lưu trữ thực phẩm',
+                ),
+                items: FridgeLocation.values.map((loc) {
+                  String displayName;
+                  switch (loc) {
+                    case FridgeLocation.FREEZER:
+                      displayName = 'Ngăn đông';
+                      break;
+                    case FridgeLocation.COOLER:
+                      displayName = 'Ngăn mát';
+                      break;
+                    case FridgeLocation.PANTRY:
+                      displayName = 'Kệ bếp';
+                      break;
+                  }
+                  return DropdownMenuItem(value: loc, child: Text(displayName));
+                }).toList(),
                 onChanged: (val) => setState(() => _location = val!),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: Text(_expirationDate == null ? 'Chưa chọn ngày hết hạn' : 'Ngày hết hạn: ${DateFormat.yMd().format(_expirationDate!)}')),
-                  TextButton(onPressed: () => _selectDate(context), child: const Text('Chọn ngày')),
-                ],
+              InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Ngày hết hạn (tùy chọn)',
+                  border: OutlineInputBorder(),
+                  helperText: 'Giúp theo dõi và cảnh báo khi thực phẩm sắp hết hạn',
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _expirationDate == null
+                          ? 'Chưa chọn'
+                          : DateFormat('dd/MM/yyyy').format(_expirationDate!),
+                      style: TextStyle(
+                        color: _expirationDate == null ? Colors.grey : null,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        if (_expirationDate != null)
+                          IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () => setState(() => _expirationDate = null),
+                            tooltip: 'Xóa ngày',
+                          ),
+                        TextButton.icon(
+                          onPressed: () => _selectDate(context),
+                          icon: const Icon(Icons.calendar_today, size: 18),
+                          label: const Text('Chọn ngày'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
-              ElevatedButton(onPressed: _submitForm, child: const Text('Thêm Thực Phẩm')),
+              ElevatedButton.icon(
+                onPressed: _submitForm,
+                icon: const Icon(Icons.add),
+                label: const Text('Thêm Thực Phẩm'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
             ],
           ),
         ),

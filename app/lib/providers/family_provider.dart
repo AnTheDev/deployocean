@@ -43,6 +43,16 @@ class FamilyProvider extends BaseProvider {
     }
   }
 
+  Future<void> fetchFamilyMembers(int familyId) async {
+    try {
+      _members = await _apiService.getFamilyMembers(familyId);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+    }
+  }
+
   Future<void> selectFamily(int familyId) async {
     setStatus(ViewStatus.Loading);
     try {
