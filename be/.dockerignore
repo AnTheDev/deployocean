@@ -1,0 +1,54 @@
+# Build outputs
+build/
+bin/
+out/
+target/
+
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+*.md
+!README.md
+
+# Environment files (secrets should be in Render dashboard)
+.env
+.env.*
+*.env
+
+# Test files
+src/test/
+
+# Uploads (should use external storage in production)
+uploads/
+
+# Misc
+*.bak
+*.tmp
+*.swp
+

@@ -15,13 +15,13 @@ spring:
         timeout: 1m
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/smart_grocery
-    username: postgres
-    password: 123456
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smart_grocery}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
       idle-timeout: 300000
       connection-timeout: 20000
 
@@ -54,20 +54,20 @@ spring:
       max-request-size: 10MB
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /
 
 # File Upload Configuration
 file:
-  upload-dir: uploads
+  upload-dir: ${APP_UPLOAD_PATH:uploads}
   max-size: 5242880  # 5MB in bytes
 
 # JWT Configuration
 jwt:
-  secret: N7fp4w9ASZgVZR8jhmgKhDL3nF7ijCti8hqTCcNPiz9
-  access-token-expiration: 3600000  # 1 hour in milliseconds
-  refresh-token-expiration: 604800000  # 7 days in milliseconds
+  secret: ${JWT_SECRET:N7fp4w9ASZgVZR8jhmgKhDL3nF7ijCti8hqTCcNPiz9}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}  # 1 hour in milliseconds
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in milliseconds
 
 # Actuator
 management:
@@ -101,7 +101,7 @@ logging:
 # API key is loaded from .env file or system environment variable
 fireworks:
   ai:
-    api-key: ${FIREWORKS_API_KEY}
+    api-key: ${FIREWORKS_AI_API_KEY:${FIREWORKS_API_KEY:}}
     base-url: https://api.fireworks.ai/inference/v1
     model: accounts/fireworks/models/llama-v3p3-70b-instruct
 
@@ -128,7 +128,15 @@ spring:
   flyway:
     clean-disabled: true
 
+# Production health check - allow Render to check health without auth
+management:
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
     root: WARN
     com.smartgrocery: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
