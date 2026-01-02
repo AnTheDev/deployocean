@@ -103,20 +103,9 @@ class _RecipeListPageState extends State<RecipeListPage> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Danh sách thực đơn', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 18)),
-                IconButton(
-                  icon: const Icon(Icons.add_circle, color: Colors.black, size: 30),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreateRecipePage()));
-                  },
-                ),
-              ],
-            ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text('Danh sách thực đơn', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 18)),
           ),
           Expanded(
             child: Consumer<RecipeProvider>(
@@ -230,6 +219,13 @@ class _RecipeListPageState extends State<RecipeListPage> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreateRecipePage()));
+        },
+        backgroundColor: const Color(0xFFF26F21),
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -55,14 +55,6 @@ class _FridgePageState extends State<FridgePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tủ Lạnh'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: selectedFamily == null
-              ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn nhóm để thêm đồ.')))
-              : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddFridgeItemPage())),
-          )
-        ],
       ),
       body: Column(
         children: [
@@ -107,8 +99,15 @@ class _FridgePageState extends State<FridgePage> {
             child: _buildFridgeContent(selectedFamily),
           ),
         ],
-      ),
-    );
+      ),      floatingActionButton: selectedFamily != null
+        ? FloatingActionButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AddFridgeItemPage())
+            ),
+            backgroundColor: const Color(0xFFF26F21),
+            child: const Icon(Icons.add),
+          )
+        : null,    );
   }
 
   Widget _buildMembersBar(BuildContext context, FamilyProvider familyProvider) {

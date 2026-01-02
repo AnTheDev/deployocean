@@ -98,38 +98,6 @@ class _FamilyListPageState extends State<FamilyListPage> {
               );
             },
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.add_circle, color: Colors.black, size: 30),
-            onSelected: (value) {
-              if (value == 'create') {
-                _navigateToCreateFamily();
-              } else if (value == 'join') {
-                _navigateToJoinFamily();
-              }
-            },
-            itemBuilder: (ctx) => [
-              const PopupMenuItem(
-                value: 'create',
-                child: Row(
-                  children: [
-                    Icon(Icons.group_add, color: Colors.black54),
-                    SizedBox(width: 8),
-                    Text('Tạo nhóm mới'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'join',
-                child: Row(
-                  children: [
-                    Icon(Icons.input, color: Colors.black54),
-                    SizedBox(width: 8),
-                    Text('Tham gia nhóm'),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ],
       ),
       body: Consumer<FamilyProvider>(
@@ -224,6 +192,42 @@ class _FamilyListPageState extends State<FamilyListPage> {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.group_add, color: Color(0xFFF26F21)),
+                    title: const Text('Tạo nhóm mới'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToCreateFamily();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.input, color: Color(0xFFF26F21)),
+                    title: const Text('Tham gia nhóm'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToJoinFamily();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        backgroundColor: orangeColor,
+        child: const Icon(Icons.add),
       ),
     );
   }
