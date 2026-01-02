@@ -10,7 +10,8 @@ import 'package:flutter_boilerplate/providers/base_provider.dart';
 import 'package:flutter_boilerplate/pages/shopping/shopping_list_page.dart';
 import 'package:flutter_boilerplate/pages/meal_plan/meal_plan_page.dart';
 import 'package:flutter_boilerplate/pages/recipe/family_recipe_list_page.dart';
-import 'package:flutter_boilerplate/pages/fridge/fridge_page.dart';
+import 'package:flutter_boilerplate/pages/fridge/fridge_page.dart' hide ShoppingListSection; // NEW CODE
+import 'package:flutter_boilerplate/pages/family/shopping_list_section.dart';
 import 'package:flutter_boilerplate/services/api/api_service.dart';
 import 'package:flutter_boilerplate/services/locator.dart';
 import 'package:flutter_boilerplate/constants/api_config.dart';
@@ -367,71 +368,73 @@ class _FamilyDetailPageState extends State<FamilyDetailPage> {
                   const Text('Nhấn để thay đổi ảnh', style: TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 16),
 
+                  // NEW CODE
+                  const ShoppingListSection(),
                   // Members Section
-                  if (members.isNotEmpty) ...[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Thành viên (${members.length})',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 100,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: members.length,
-                        itemBuilder: (ctx, index) {
-                          final member = members[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Column(
-                              children: [
-                              CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: Colors.grey[200],
-                                  backgroundImage: ApiConfig.getImageUrl(member.avatarUrl) != null
-                                      ? NetworkImage(ApiConfig.getImageUrl(member.avatarUrl)!)
-                                      : null,
-                                  child: member.avatarUrl == null
-                                      ? Text(
-                                          member.fullName.isNotEmpty 
-                                              ? member.fullName[0].toUpperCase() 
-                                              : '?',
-                                          style: const TextStyle(fontSize: 20),
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(height: 4),
-                                SizedBox(
-                                  width: 70,
-                                  child: Text(
-                                    member.fullName,
-                                    style: const TextStyle(fontSize: 12),
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Text(
-                                  member.role == 'OWNER' ? 'Chủ nhóm' : 'Thành viên',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: member.role == 'OWNER' 
-                                        ? orangeColor 
-                                        : Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                  // if (members.isNotEmpty) ...[
+                  //   Align(
+                  //     alignment: Alignment.centerLeft,
+                  //     child: Text(
+                  //       'Thành viên (${members.length})',
+                  //       style: const TextStyle(
+                  //         fontSize: 18,
+                  //         fontWeight: FontWeight.bold,
+                  //       ),
+                  //     ),
+                  //   ),
+                  //   const SizedBox(height: 8),
+                  //   SizedBox(
+                  //     height: 100,
+                  //     child: ListView.builder(
+                  //       scrollDirection: Axis.horizontal,
+                  //       itemCount: members.length,
+                  //       itemBuilder: (ctx, index) {
+                  //         final member = members[index];
+                  //         return Padding(
+                  //           padding: const EdgeInsets.only(right: 12),
+                  //           child: Column(
+                  //             children: [
+                  //             CircleAvatar(
+                  //                 radius: 28,
+                  //                 backgroundColor: Colors.grey[200],
+                  //                 backgroundImage: ApiConfig.getImageUrl(member.avatarUrl) != null
+                  //                     ? NetworkImage(ApiConfig.getImageUrl(member.avatarUrl)!)
+                  //                     : null,
+                  //                 child: member.avatarUrl == null
+                  //                     ? Text(
+                  //                         member.fullName.isNotEmpty 
+                  //                             ? member.fullName[0].toUpperCase() 
+                  //                             : '?',
+                  //                         style: const TextStyle(fontSize: 20),
+                  //                       )
+                  //                     : null,
+                  //               ),
+                  //               const SizedBox(height: 4),
+                  //               SizedBox(
+                  //                 width: 70,
+                  //                 child: Text(
+                  //                   member.fullName,
+                  //                   style: const TextStyle(fontSize: 12),
+                  //                   textAlign: TextAlign.center,
+                  //                   overflow: TextOverflow.ellipsis,
+                  //                 ),
+                  //               ),
+                  //               Text(
+                  //                 member.role == 'OWNER' ? 'Chủ nhóm' : 'Thành viên',
+                  //                 style: TextStyle(
+                  //                   fontSize: 10,
+                  //                   color: member.role == 'OWNER' 
+                  //                       ? orangeColor 
+                  //                       : Colors.grey,
+                  //                 ),
+                  //               ),
+                  //             ],
+                  //           ),
+                  //         );
+                  //       },
+                  //     ),
+                  //   ),
+                  // ],
 
                   const SizedBox(height: 24),
 
