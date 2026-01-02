@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_boilerplate/models/notification_model.dart';
 import 'package:flutter_boilerplate/providers/notification_provider.dart';
+import 'package:flutter_boilerplate/providers/family_provider.dart';
+import 'package:flutter_boilerplate/pages/fridge/fridge_page.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class NotificationPage extends StatefulWidget {
@@ -325,8 +327,29 @@ class _NotificationPageState extends State<NotificationPage> {
       context.read<NotificationProvider>().markAsRead([notification.id]);
     }
 
-    // Navigate based on reference type
-    // TODO: Add navigation logic based on notification.referenceType and notification.referenceId
+    // Navigate based on notification type and reference
+    if (notification.type == NotificationType.fridgeExpiry && 
+        notification.referenceType == 'FAMILY' && 
+        notification.referenceId != null) {
+      // Set selected family and navigate to fridge page
+      final familyProvider = context.read<FamilyProvider>();
+      final targetFamilyId = notification.referenceId!;
+      
+      // Find and select the family
+      final targetFamily = familyProvider.families.firstWhere(
+        (f) => f.id == targetFamilyId,
+        orElse: () => familyProvider.families.first,
+      );
+      
+      familyProvider.setSelectedFamily(targetFamily);
+      
+      // Navigate to fridge page
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const FridgePage(),
+        ),
+      );
+    }
   }
 
   void _showNotificationOptions(NotificationItem notification) {

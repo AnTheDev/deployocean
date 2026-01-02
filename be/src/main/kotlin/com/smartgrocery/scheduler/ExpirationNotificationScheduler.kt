@@ -19,6 +19,15 @@ class ExpirationNotificationScheduler(
     private val logger = LoggerFactory.getLogger(ExpirationNotificationScheduler::class.java)
 
     /**
+     * Manual trigger for testing - can be called from controller
+     */
+    fun triggerExpirationCheck(): String {
+        logger.info("Manual trigger: Starting expiration check...")
+        checkExpiringItems()
+        return "Expiration check completed"
+    }
+
+    /**
      * Runs every day at 8:00 AM to check for expiring items
      */
     @Scheduled(cron = "0 0 8 * * *")
@@ -65,9 +74,30 @@ class ExpirationNotificationScheduler(
         val expiredItems = fridgeItemRepository.findExpiredWithDetails(today)
         if (expiredItems.isNotEmpty()) {
             logger.info("Found ${expiredItems.size} expired items to update")
-            expiredItems.forEach { item ->
-                item.status = com.smartgrocery.entity.FridgeItemStatus.EXPIRED
+            
+            // Group expired items by family
+            val expiredByFamily = expiredItems.groupBy { it.family.id!! }
+            
+            expiredByFamily.forEach { (familyId, items) ->
+                val family = items.first().family
+                
+                items.forEach { item ->
+                    val notification = ExpiringItemNotification(
+                        itemId = item.id!!,
+                        productName = item.getProductName(),
+                        expirationDate = item.expirationDate!!,
+                        daysUntilExpiration = 0L,
+                        familyId = familyId,
+                        familyName = family.name
+                    )
+                    
+                    // Send expired notification for each item
+                    notificationService.sendExpiredItemNotification(familyId, notification)
+                    
+                    item.status = com.smartgrocery.entity.FridgeItemStatus.EXPIRED
+                }
             }
+            
             fridgeItemRepository.saveAll(expiredItems)
         }
 
