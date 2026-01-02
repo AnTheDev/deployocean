@@ -60,6 +60,9 @@ dependencies {
     // Dotenv for loading .env files
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
 
+    // Cloudinary for image storage
+    implementation("com.cloudinary:cloudinary-http44:1.36.0")
+
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
     kapt("org.mapstruct:mapstruct-processor:1.5.5.Final")

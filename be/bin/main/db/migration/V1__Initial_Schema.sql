@@ -231,6 +231,21 @@ INSERT INTO roles (name, description) VALUES
     ('ADMIN', 'System administrator with full access'),
     ('USER', 'Regular user with standard access');
 
+-- Insert default admin user (password: 123456)
+-- BCrypt hash của '123456'
+INSERT INTO users (username, email, password_hash, full_name, is_active, created_at, updated_at) VALUES
+    ('admin', 'admin@smartgrocery.com', '$2a$10$9zGlWWg/P8JzAnES/Is4hemnmW4VE9B7P6k9lhHfOfUKuVnw/jjyS', 'System Admin', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Assign ADMIN role to admin user
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u, roles r
+WHERE u.username = 'admin' AND r.name = 'ADMIN';
+
+-- Also assign USER role to admin
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u, roles r
+WHERE u.username = 'admin' AND r.name = 'USER';
+
 -- Insert sample categories
 INSERT INTO categories (name, icon_url, description, display_order) VALUES
     ('Rau củ quả', '🥬', 'Các loại rau, củ, quả tươi', 1),

@@ -37,17 +37,23 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { authorize ->
                 authorize
-                    // Public endpoints
-                    .requestMatchers("/api/v1/auth/**").permitAll()
+                    // Public auth endpoints (chỉ login, register, refresh)
+                    .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh").permitAll()
+                    // Swagger UI
                     .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
+                    // Actuator
                     .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                    // Public file serving
+                    .requestMatchers("/files/**").permitAll()
                     // Public read-only endpoints
                     .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/master-products/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/recipes/**").permitAll()
+                    // AI endpoints (authenticated users only, but explicitly allow here for clarity)
+                    .requestMatchers("/api/v1/ai/**").authenticated()
                     // Admin endpoints
                     .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                    // All other endpoints require authentication
+                    // All other endpoints require authentication (bao gồm /api/v1/auth/me)
                     .anyRequest().authenticated()
             }
             .authenticationProvider(authenticationProvider())

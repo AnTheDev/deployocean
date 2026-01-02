@@ -22,7 +22,7 @@ interface FamilyMemberRepository : JpaRepository<FamilyMember, FamilyMemberId> {
     @Query("SELECT fm FROM FamilyMember fm WHERE fm.family.id = :familyId AND fm.role = :role")
     fun findByFamilyIdAndRole(familyId: Long, role: FamilyRole): List<FamilyMember>
 
-    @Query("SELECT fm FROM FamilyMember fm JOIN FETCH fm.family WHERE fm.user.id = :userId")
+    @Query("SELECT fm FROM FamilyMember fm JOIN FETCH fm.family f JOIN FETCH f.createdBy WHERE fm.user.id = :userId")
     fun findByUserIdWithFamily(userId: Long): List<FamilyMember>
 }
 

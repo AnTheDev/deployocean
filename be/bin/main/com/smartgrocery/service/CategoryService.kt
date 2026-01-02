@@ -1,6 +1,8 @@
 package com.smartgrocery.service
 
-import com.smartgrocery.dto.category.*
+import com.smartgrocery.dto.category.CategoryResponse
+import com.smartgrocery.dto.category.CreateCategoryRequest
+import com.smartgrocery.dto.category.UpdateCategoryRequest
 import com.smartgrocery.entity.Category
 import com.smartgrocery.exception.ConflictException
 import com.smartgrocery.exception.ErrorCode

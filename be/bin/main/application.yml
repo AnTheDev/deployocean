@@ -2,20 +2,32 @@ spring:
   application:
     name: smart-grocery
 
+  # Docker Compose - tự động khởi động PostgreSQL container
+  docker:
+    compose:
+      enabled: true
+      file: docker-compose.yml
+      lifecycle-management: start_and_stop  # Tự động start khi run, stop khi shutdown
+      start:
+        command: up
+      stop:
+        command: down
+        timeout: 1m
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/smart_grocery
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smart_grocery}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
       idle-timeout: 300000
       connection-timeout: 20000
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
@@ -27,6 +39,7 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+    ignore-migration-patterns: "*:missing"
 
   jackson:
     serialization:
@@ -34,16 +47,33 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /
 
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+  folder: ${CLOUDINARY_FOLDER:smart-grocery}
+
+# File Upload Configuration (legacy - kept for reference)
+file:
+  max-size: 5242880  # 5MB in bytes
+
 # JWT Configuration
 jwt:
-  secret: your-256-bit-secret-key-here-must-be-at-least-32-characters-long-for-hs256
-  access-token-expiration: 3600000  # 1 hour in milliseconds
-  refresh-token-expiration: 604800000  # 7 days in milliseconds
+  secret: ${JWT_SECRET:N7fp4w9ASZgVZR8jhmgKhDL3nF7ijCti8hqTCcNPiz9}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}  # 1 hour in milliseconds
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in milliseconds
 
 # Actuator
 management:
@@ -73,6 +103,14 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
+# Fireworks AI Configuration
+# API key is loaded from .env file or system environment variable
+fireworks:
+  ai:
+    api-key: ${FIREWORKS_AI_API_KEY:${FIREWORKS_API_KEY:}}
+    base-url: https://api.fireworks.ai/inference/v1
+    model: accounts/fireworks/models/llama-v3p3-70b-instruct
+
 ---
 spring:
   config:
@@ -88,13 +126,23 @@ spring:
   config:
     activate:
       on-profile: prod
+  docker:
+    compose:
+      enabled: false  # Không dùng Docker Compose trong production
   jpa:
     show-sql: false
   flyway:
     clean-disabled: true
 
+# Production health check - allow Render to check health without auth
+management:
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
     root: WARN
     com.smartgrocery: INFO
-
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

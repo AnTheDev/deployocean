@@ -20,7 +20,7 @@ class ProductService(
 ) {
 
     fun getAllProducts(pageable: Pageable): PageResponse<ProductResponse> {
-        val page = productRepository.findByIsActiveTrue(pageable)
+        val page = productRepository.findByIsActiveTrueWithCategories(pageable)
         return PageResponse.from(page) { toResponse(it) }
     }
 
@@ -31,12 +31,12 @@ class ProductService(
     }
 
     fun searchProducts(name: String, pageable: Pageable): PageResponse<ProductResponse> {
-        val page = productRepository.findByNameContainingIgnoreCaseAndIsActiveTrue(name, pageable)
+        val page = productRepository.findByNameContainingIgnoreCaseAndIsActiveTrueWithCategories(name, pageable)
         return PageResponse.from(page) { toResponse(it) }
     }
 
     fun getProductsByCategory(categoryId: Long, pageable: Pageable): PageResponse<ProductResponse> {
-        val page = productRepository.findByCategoryId(categoryId, pageable)
+        val page = productRepository.findByCategoryIdWithCategories(categoryId, pageable)
         return PageResponse.from(page) { toResponse(it) }
     }
 

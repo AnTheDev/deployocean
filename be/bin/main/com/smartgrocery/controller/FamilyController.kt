@@ -4,11 +4,14 @@ import com.smartgrocery.dto.common.ApiResponse
 import com.smartgrocery.dto.family.*
 import com.smartgrocery.service.FamilyService
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/v1/families")
@@ -17,12 +20,21 @@ class FamilyController(
     private val familyService: FamilyService
 ) {
 
-    @PostMapping
-    @Operation(summary = "Create a new family")
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @Operation(summary = "Create a new family with image and invite friends")
     fun createFamily(
-        @Valid @RequestBody request: CreateFamilyRequest
+        @RequestParam("name") name: String,
+        @RequestParam("description", required = false) description: String?,
+        @RequestParam("friendIds", required = false) friendIds: List<Long>?,
+        @Parameter(description = "Family image")
+        @RequestPart("image", required = false) image: MultipartFile?
     ): ResponseEntity<ApiResponse<FamilyResponse>> {
-        val family = familyService.createFamily(request)
+        val request = CreateFamilyRequest(
+            name = name,
+            description = description,
+            friendIds = friendIds ?: emptyList()
+        )
+        val family = familyService.createFamily(request, image)
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse.created(family, "Family created successfully"))
@@ -62,14 +74,27 @@ class FamilyController(
         return ResponseEntity.ok(ApiResponse.success(members))
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update family information (Leader only)")
+    @PutMapping("/{id}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @Operation(summary = "Update family information with optional image (Leader only)")
     fun updateFamily(
         @PathVariable id: Long,
-        @Valid @RequestBody request: UpdateFamilyRequest
+        @RequestParam("name", required = false) name: String?,
+        @RequestParam("description", required = false) description: String?,
+        @Parameter(description = "Family image")
+        @RequestPart("image", required = false) image: MultipartFile?
     ): ResponseEntity<ApiResponse<FamilyResponse>> {
-        val family = familyService.updateFamily(id, request)
+        val request = UpdateFamilyRequest(name = name, description = description)
+        val family = familyService.updateFamilyWithImage(id, request, image)
         return ResponseEntity.ok(ApiResponse.success(family, "Family updated successfully"))
+    }
+
+    @DeleteMapping("/{id}/image")
+    @Operation(summary = "Delete family image (Leader only)")
+    fun deleteFamilyImage(
+        @PathVariable id: Long
+    ): ResponseEntity<ApiResponse<FamilyResponse>> {
+        val family = familyService.deleteFamilyImage(id)
+        return ResponseEntity.ok(ApiResponse.success(family, "Family image deleted successfully"))
     }
 
     @PatchMapping("/{familyId}/members/{userId}")
@@ -119,5 +144,38 @@ class FamilyController(
         familyService.deleteFamily(id)
         return ResponseEntity.ok(ApiResponse.success("Family deleted successfully"))
     }
-}
 
+    // ============================================
+    // FAMILY INVITATION ENDPOINTS
+    // ============================================
+
+    @GetMapping("/invitations")
+    @Operation(summary = "Get my pending family invitations")
+    fun getMyPendingInvitations(): ResponseEntity<ApiResponse<List<FamilyInvitationResponse>>> {
+        val invitations = familyService.getMyPendingInvitations()
+        return ResponseEntity.ok(ApiResponse.success(invitations))
+    }
+
+    @PostMapping("/invitations/{invitationId}/respond")
+    @Operation(summary = "Accept or reject a family invitation")
+    fun respondToInvitation(
+        @PathVariable invitationId: Long,
+        @Valid @RequestBody request: RespondToInvitationRequest
+    ): ResponseEntity<ApiResponse<FamilyInvitationResponse>> {
+        val result = familyService.respondToInvitation(invitationId, request.accept)
+        val message = if (request.accept) "Invitation accepted" else "Invitation rejected"
+        return ResponseEntity.ok(ApiResponse.success(result, message))
+    }
+
+    @PostMapping("/{familyId}/invite/{friendId}")
+    @Operation(summary = "Invite a friend to join family (Leader only)")
+    fun inviteFriendToFamily(
+        @PathVariable familyId: Long,
+        @PathVariable friendId: Long
+    ): ResponseEntity<ApiResponse<FamilyInvitationResponse>> {
+        val invitation = familyService.inviteFriendToFamily(familyId, friendId)
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(ApiResponse.created(invitation, "Invitation sent"))
+    }
+}

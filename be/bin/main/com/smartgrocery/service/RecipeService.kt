@@ -27,7 +27,7 @@ class RecipeService(
 ) {
 
     fun getAllRecipes(pageable: Pageable): PageResponse<RecipeResponse> {
-        val page = recipeRepository.findByIsPublicTrue(pageable)
+        val page = recipeRepository.findByIsPublicTrueWithCreatedBy(pageable)
         return PageResponse.from(page) { toResponse(it) }
     }
 
@@ -38,14 +38,14 @@ class RecipeService(
     }
 
     fun searchRecipes(title: String): List<RecipeResponse> {
-        return recipeRepository.findByTitleContainingIgnoreCase(title)
+        return recipeRepository.findByTitleContainingIgnoreCaseWithCreatedBy(title)
             .filter { it.isPublic }
             .map { toResponse(it) }
     }
 
     fun getMyRecipes(): List<RecipeResponse> {
         val currentUser = getCurrentUser()
-        return recipeRepository.findByCreatedById(currentUser.id)
+        return recipeRepository.findByCreatedByIdWithCreatedBy(currentUser.id)
             .map { toResponse(it) }
     }
 
@@ -65,6 +65,7 @@ class RecipeService(
             servings = request.servings,
             imageUrl = request.imageUrl,
             isPublic = request.isPublic,
+            notes = request.notes,
             createdBy = user
         )
 
@@ -100,6 +101,7 @@ class RecipeService(
         request.servings?.let { recipe.servings = it }
         request.imageUrl?.let { recipe.imageUrl = it }
         request.isPublic?.let { recipe.isPublic = it }
+        request.notes?.let { recipe.notes = it }
 
         // Update ingredients if provided
         request.ingredients?.let { ingredientRequests ->
@@ -142,7 +144,7 @@ class RecipeService(
         }
 
         // Get available ingredients from fridge
-        val fridgeItems = fridgeItemRepository.findActiveByFamilyId(familyId)
+        val fridgeItems = fridgeItemRepository.findActiveByFamilyIdWithDetails(familyId)
         val availableProductIds = fridgeItems.mapNotNull { it.masterProduct?.id }.distinct()
 
         if (availableProductIds.isEmpty()) {
@@ -150,10 +152,10 @@ class RecipeService(
         }
 
         // Find recipes that use available ingredients
-        val recipes = recipeRepository.findByIngredientProductIds(availableProductIds)
+        val recipes = recipeRepository.findByIngredientProductIdsWithDetails(availableProductIds)
 
         return recipes.map { recipe ->
-            val recipeIngredients = recipeIngredientRepository.findByRecipeId(recipe.id!!)
+            val recipeIngredients = recipe.ingredients.toList()
             val requiredProductIds = recipeIngredients.mapNotNull { it.masterProduct?.id }
             
             val matchedIngredients = recipeIngredients
@@ -216,6 +218,7 @@ class RecipeService(
             servings = recipe.servings,
             imageUrl = recipe.imageUrl,
             isPublic = recipe.isPublic,
+            notes = recipe.notes,
             createdBy = recipe.createdBy?.let {
                 UserSimpleResponse(
                     id = it.id!!,
@@ -241,6 +244,7 @@ class RecipeService(
             servings = recipe.servings,
             imageUrl = recipe.imageUrl,
             isPublic = recipe.isPublic,
+            notes = recipe.notes,
             createdBy = recipe.createdBy?.let {
                 UserSimpleResponse(
                     id = it.id!!,

@@ -18,7 +18,7 @@ class FamilyService(
     private val familyMemberRepository: FamilyMemberRepository,
     private val userRepository: UserRepository,
     private val familyInvitationRepository: FamilyInvitationRepository,
-    private val fileStorageService: FileStorageService,
+    private val cloudinaryService: CloudinaryService,
     private val friendshipRepository: FriendshipRepository
 ) {
 
@@ -30,8 +30,8 @@ class FamilyService(
 
         val inviteCode = generateInviteCode()
 
-        // Store image if provided
-        val imageUrl: String? = image?.let { fileStorageService.storeFile(it, "families") }
+        // Upload image to Cloudinary if provided
+        val imageUrl: String? = image?.let { cloudinaryService.uploadFile(it, "families") }
 
         val family = Family(
             name = request.name,
@@ -363,11 +363,11 @@ class FamilyService(
 
         // Update image if provided
         image?.let {
-            // Delete old image if exists
+            // Delete old image from Cloudinary if exists
             family.imageUrl?.let { oldUrl ->
-                fileStorageService.deleteFile(oldUrl)
+                cloudinaryService.deleteFile(oldUrl)
             }
-            family.imageUrl = fileStorageService.storeFile(it, "families")
+            family.imageUrl = cloudinaryService.uploadFile(it, "families")
         }
 
         val savedFamily = familyRepository.save(family)
@@ -384,9 +384,9 @@ class FamilyService(
         val family =
             familyRepository.findById(familyId).orElseThrow { ResourceNotFoundException(ErrorCode.FAMILY_NOT_FOUND) }
 
-        // Delete image if exists
+        // Delete image from Cloudinary if exists
         family.imageUrl?.let { imageUrl ->
-            fileStorageService.deleteFile(imageUrl)
+            cloudinaryService.deleteFile(imageUrl)
         }
         family.imageUrl = null
 
@@ -405,7 +405,7 @@ class FamilyService(
             id = family.id!!,
             name = family.name,
             description = family.description,
-            imageUrl = family.imageUrl?.let { "/files/$it" },
+            imageUrl = family.imageUrl,  // Full Cloudinary URL
             inviteCode = family.inviteCode,
             createdBy = UserSimpleResponse(
                 id = family.createdBy.id!!, username = family.createdBy.username, fullName = family.createdBy.fullName
@@ -423,7 +423,7 @@ class FamilyService(
             id = family.id!!,
             name = family.name,
             description = family.description,
-            imageUrl = family.imageUrl?.let { "/files/$it" },
+            imageUrl = family.imageUrl,  // Full Cloudinary URL
             inviteCode = family.inviteCode,
             createdBy = UserSimpleResponse(
                 id = family.createdBy.id!!, username = family.createdBy.username, fullName = family.createdBy.fullName

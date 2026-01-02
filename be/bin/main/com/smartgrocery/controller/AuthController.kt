@@ -7,8 +7,10 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -69,6 +71,22 @@ class AuthController(
     ): ResponseEntity<ApiResponse<Nothing>> {
         authService.changePassword(request)
         return ResponseEntity.ok(ApiResponse.success("Password changed successfully"))
+    }
+
+    @PostMapping("/me/avatar", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @Operation(summary = "Upload or update user avatar")
+    fun uploadAvatar(
+        @RequestParam("file") file: MultipartFile
+    ): ResponseEntity<ApiResponse<UserResponse>> {
+        val response = authService.uploadAvatar(file)
+        return ResponseEntity.ok(ApiResponse.success(response, "Avatar uploaded successfully"))
+    }
+
+    @DeleteMapping("/me/avatar")
+    @Operation(summary = "Delete user avatar")
+    fun deleteAvatar(): ResponseEntity<ApiResponse<UserResponse>> {
+        val response = authService.deleteAvatar()
+        return ResponseEntity.ok(ApiResponse.success(response, "Avatar deleted successfully"))
     }
 }
 

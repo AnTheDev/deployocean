@@ -27,7 +27,7 @@ class MasterProduct(
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "product_categories",
         joinColumns = [JoinColumn(name = "product_id")],

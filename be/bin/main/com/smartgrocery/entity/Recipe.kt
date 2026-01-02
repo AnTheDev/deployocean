@@ -43,6 +43,9 @@ class Recipe(
     @Column(name = "is_public", nullable = false)
     var isPublic: Boolean = true,
 
+    @Column(name = "notes", columnDefinition = "TEXT")
+    var notes: String? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     var createdBy: User? = null,

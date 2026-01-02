@@ -48,6 +48,7 @@ data class UserResponse(
     val username: String,
     val email: String,
     val fullName: String,
+    val avatarUrl: String? = null,
     val isActive: Boolean,
     val roles: List<String>
 )

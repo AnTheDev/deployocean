@@ -40,6 +40,7 @@ Backend API cho ứng dụng di động đa nền tảng giúp các gia đình q
 | Tài liệu API | OpenAPI (Swagger) |
 | Object Mapping | MapStruct |
 | JSON | Jackson (Kotlin Module) |
+| **Lưu trữ ảnh** | **Cloudinary CDN** 🆕 |
 
 ## ✨ Tính Năng
 
@@ -109,12 +110,13 @@ Backend API cho ứng dụng di động đa nền tảng giúp các gia đình q
 - ✅ Xem theo ngày và tuần
 - ✅ Liên kết công thức hoặc dùng tên món tùy chỉnh
 
-### 9. Upload & Phục Vụ File 🆕
-- ✅ Upload ảnh (JPG, PNG, GIF, WebP)
+### 9. Upload & Lưu Trữ Ảnh (Cloudinary) 🆕
+- ✅ Upload ảnh lên Cloudinary CDN (JPG, PNG, GIF, WebP)
 - ✅ Giới hạn kích thước file (mặc định 5MB)
-- ✅ Tạo tên file unique (UUID)
-- ✅ Public endpoint để lấy ảnh (không cần xác thực)
-- ✅ Hỗ trợ ảnh đại diện gia đình
+- ✅ Tự động tối ưu hóa ảnh (quality: auto, format: auto)
+- ✅ **Trả về full URL Cloudinary** cho frontend sử dụng trực tiếp
+- ✅ Hỗ trợ ảnh đại diện user và ảnh gia đình
+- ✅ Tự động xóa ảnh cũ khi cập nhật
 
 ### 10. Tác Vụ Nền
 - ✅ Kiểm tra hết hạn hàng ngày (8 giờ sáng)
@@ -193,8 +195,8 @@ src/main/kotlin/com/smartgrocery/
 └── service/                         # Logic nghiệp vụ
     ├── AuthService.kt
     ├── CategoryService.kt
+    ├── CloudinaryService.kt         # 🆕 Upload ảnh lên Cloudinary
     ├── FamilyService.kt
-    ├── FileStorageService.kt        # 🆕 Quản lý file upload
     ├── FridgeService.kt
     ├── FriendshipService.kt         # 🆕 Quản lý bạn bè
     ├── MealPlanService.kt
@@ -226,17 +228,40 @@ CREATE DATABASE smart_grocery;
 
 ### Cấu Hình
 
-Cập nhật file `src/main/resources/application.yml`:
+Cập nhật file `src/main/resources/application.yml` hoặc tạo file `.env`:
 
 ```yaml
+# Database
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/smart_grocery
     username: tên_đăng_nhập
     password: mật_khẩu
 
+# JWT
 jwt:
   secret: khóa-bí-mật-256-bit-ít-nhất-32-ký-tự
+
+# Cloudinary (bắt buộc cho upload ảnh)
+cloudinary:
+  cloud-name: your-cloud-name
+  api-key: your-api-key
+  api-secret: your-api-secret
+  folder: smart-grocery
+```
+
+#### Thiết lập Cloudinary:
+
+1. Đăng ký tài khoản miễn phí tại [cloudinary.com](https://cloudinary.com)
+2. Vào Dashboard → lấy thông tin:
+   - Cloud name
+   - API Key
+   - API Secret
+3. Thêm vào file `.env`:
+```env
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=123456789012345
+CLOUDINARY_API_SECRET=your-api-secret
 ```
 
 ### Chạy Ứng Dụng
@@ -625,20 +650,64 @@ curl -X PUT 'http://localhost:8080/api/v1/families/1' \
 
 ---
 
-### 6. Lấy Ảnh Gia Đình
+### 6. Sử Dụng Ảnh Từ API (Cloudinary) 🆕
 
-Ảnh được lưu với đường dẫn trong field `imageUrl`. Đây là public endpoint, **không cần authentication**.
+⚠️ **QUAN TRỌNG**: Ảnh giờ được lưu trên **Cloudinary CDN** và API trả về **full URL**.
 
-**Endpoint:** `GET /files/{path}`
+#### Các field trả về URL ảnh:
+| API | Field | Mô tả |
+|-----|-------|-------|
+| `GET /api/v1/auth/me` | `avatarUrl` | Ảnh đại diện user |
+| `GET /api/v1/families/{id}` | `imageUrl` | Ảnh đại diện gia đình |
+| `POST /api/v1/families` | `imageUrl` | Ảnh gia đình sau khi tạo |
 
-**Ví dụ:**
-- Nếu `imageUrl = "/files/families/abc123.jpg"`
-- URL đầy đủ: `http://localhost:8080/files/families/abc123.jpg`
-
-```html
-<!-- Trong HTML/React -->
-<img src="http://localhost:8080/files/families/abc123.jpg" alt="Family photo" />
+#### Định dạng URL Cloudinary:
 ```
+https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{folder}/{public_id}.{format}
+```
+
+#### Ví dụ Response:
+```json
+{
+  "code": 1000,
+  "data": {
+    "id": 1,
+    "name": "Gia đình Nguyễn",
+    "imageUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/smart-grocery/families/abc123.jpg",
+    ...
+  }
+}
+```
+
+#### Sử dụng trong Frontend:
+
+**React/React Native:**
+```jsx
+// imageUrl đã là full URL, dùng trực tiếp
+<Image source={{ uri: family.imageUrl }} />
+
+// Hoặc với fallback
+<Image 
+  source={{ uri: family.imageUrl || 'https://placehold.co/200x200?text=No+Image' }} 
+/>
+```
+
+**HTML:**
+```html
+<!-- Sử dụng trực tiếp URL từ API -->
+<img src="${family.imageUrl}" alt="Family photo" />
+```
+
+**Flutter:**
+```dart
+Image.network(family.imageUrl ?? 'https://placehold.co/200x200')
+```
+
+#### ⚠️ Lưu ý:
+- **KHÔNG** cần ghép URL base server nữa
+- `imageUrl` và `avatarUrl` có thể là `null` nếu chưa upload ảnh
+- Cloudinary tự động tối ưu ảnh (format, quality)
+- Ảnh được cache trên CDN toàn cầu → load nhanh
 
 ---
 
@@ -852,10 +921,16 @@ fun updateExpiredItemsStatus() {
 | POST | `/api/v1/families/invitations/{id}/respond` | Chấp nhận/từ chối lời mời |
 | POST | `/api/v1/families/{familyId}/invite/{friendId}` | Mời bạn bè vào gia đình |
 
-### File 🆕
+### Avatar (User) 🆕
 | Phương thức | Endpoint | Mô tả |
 |--------|----------|-------------|
-| GET | `/files/{path}` | Lấy file (public, không cần auth) |
+| POST | `/api/v1/auth/me/avatar` | Upload avatar (multipart) → trả về full Cloudinary URL |
+| DELETE | `/api/v1/auth/me/avatar` | Xóa avatar |
+
+### File ~~🆕~~ (DEPRECATED)
+| Phương thức | Endpoint | Mô tả |
+|--------|----------|-------------|
+| ~~GET~~ | ~~`/files/{path}`~~ | ⚠️ **DEPRECATED** - Ảnh giờ dùng Cloudinary URL trực tiếp |
 
 ### Danh Sách Mua Sắm
 | Phương thức | Endpoint | Mô tả |

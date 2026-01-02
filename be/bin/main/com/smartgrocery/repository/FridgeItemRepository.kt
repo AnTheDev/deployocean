@@ -5,6 +5,7 @@ import com.smartgrocery.entity.FridgeItemStatus
 import com.smartgrocery.entity.FridgeLocation
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
@@ -13,22 +14,28 @@ import java.time.LocalDate
 @Repository
 interface FridgeItemRepository : JpaRepository<FridgeItem, Long> {
     
-    fun findByFamilyId(familyId: Long): List<FridgeItem>
+    @EntityGraph(attributePaths = ["family", "masterProduct", "addedBy"])
+    @Query("SELECT fi FROM FridgeItem fi WHERE fi.family.id = :familyId")
+    fun findByFamilyIdWithDetails(familyId: Long): List<FridgeItem>
     
-    fun findByFamilyId(familyId: Long, pageable: Pageable): Page<FridgeItem>
+    @EntityGraph(attributePaths = ["family", "masterProduct", "addedBy"])
+    @Query("SELECT fi FROM FridgeItem fi WHERE fi.family.id = :familyId")
+    fun findByFamilyIdWithDetails(familyId: Long, pageable: Pageable): Page<FridgeItem>
     
     fun findByFamilyIdAndLocation(familyId: Long, location: FridgeLocation): List<FridgeItem>
     
     fun findByFamilyIdAndStatus(familyId: Long, status: FridgeItemStatus): List<FridgeItem>
 
+    @EntityGraph(attributePaths = ["family", "masterProduct", "addedBy"])
     @Query("""
         SELECT fi FROM FridgeItem fi 
         WHERE fi.family.id = :familyId 
         AND fi.status NOT IN ('CONSUMED', 'DISCARDED')
         ORDER BY fi.expirationDate ASC NULLS LAST
     """)
-    fun findActiveByFamilyId(familyId: Long): List<FridgeItem>
+    fun findActiveByFamilyIdWithDetails(familyId: Long): List<FridgeItem>
 
+    @EntityGraph(attributePaths = ["family", "masterProduct", "addedBy"])
     @Query("""
         SELECT fi FROM FridgeItem fi 
         WHERE fi.expirationDate IS NOT NULL 
@@ -36,15 +43,16 @@ interface FridgeItemRepository : JpaRepository<FridgeItem, Long> {
         AND fi.expirationDate >= :today
         AND fi.status NOT IN ('CONSUMED', 'DISCARDED', 'EXPIRED')
     """)
-    fun findExpiringSoon(today: LocalDate, thresholdDate: LocalDate): List<FridgeItem>
+    fun findExpiringSoonWithDetails(today: LocalDate, thresholdDate: LocalDate): List<FridgeItem>
 
+    @EntityGraph(attributePaths = ["family", "masterProduct", "addedBy"])
     @Query("""
         SELECT fi FROM FridgeItem fi 
         WHERE fi.expirationDate IS NOT NULL 
         AND fi.expirationDate < :today
         AND fi.status NOT IN ('CONSUMED', 'DISCARDED', 'EXPIRED')
     """)
-    fun findExpired(today: LocalDate): List<FridgeItem>
+    fun findExpiredWithDetails(today: LocalDate): List<FridgeItem>
 
     @Query("""
         SELECT fi FROM FridgeItem fi 
@@ -54,6 +62,7 @@ interface FridgeItemRepository : JpaRepository<FridgeItem, Long> {
     """)
     fun findByFamilyIdAndProductId(familyId: Long, productId: Long): List<FridgeItem>
 
+    @EntityGraph(attributePaths = ["family", "masterProduct", "addedBy"])
     @Query("""
         SELECT fi FROM FridgeItem fi 
         WHERE fi.family.id = :familyId 

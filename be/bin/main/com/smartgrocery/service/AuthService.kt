@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 
 @Service
 class AuthService(
@@ -22,7 +23,8 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val authenticationManager: AuthenticationManager,
     private val jwtTokenProvider: JwtTokenProvider,
-    private val jwtConfig: JwtConfig
+    private val jwtConfig: JwtConfig,
+    private val cloudinaryService: CloudinaryService
 ) {
 
     @Transactional
@@ -38,8 +40,8 @@ class AuthService(
         }
 
         // Get default USER role
-        val userRole = roleRepository.findByName("USER")
-            ?: throw ApiException(ErrorCode.INTERNAL_ERROR, "Default role not found")
+        val userRole =
+            roleRepository.findByName("USER") ?: throw ApiException(ErrorCode.INTERNAL_ERROR, "Default role not found")
 
         // Create new user
         val user = User(
@@ -100,8 +102,8 @@ class AuthService(
         }
 
         val username = jwtTokenProvider.getUsernameFromToken(request.refreshToken)
-        val user = userRepository.findByUsernameWithRoles(username)
-            ?: throw AuthenticationException(ErrorCode.USER_NOT_FOUND)
+        val user =
+            userRepository.findByUsernameWithRoles(username) ?: throw AuthenticationException(ErrorCode.USER_NOT_FOUND)
 
         if (!user.isActive) {
             throw AuthenticationException(ErrorCode.ACCOUNT_DISABLED)
@@ -121,9 +123,10 @@ class AuthService(
     fun getCurrentUser(): UserResponse {
         val authentication = SecurityContextHolder.getContext().authentication
         val userDetails = authentication.principal as CustomUserDetails
-        
-        val user = userRepository.findByUsernameWithRoles(userDetails.username)
-            ?: throw ResourceNotFoundException(ErrorCode.USER_NOT_FOUND)
+
+        val user = userRepository.findByUsernameWithRoles(userDetails.username) ?: throw ResourceNotFoundException(
+            ErrorCode.USER_NOT_FOUND
+        )
 
         return toUserResponse(user)
     }
@@ -132,16 +135,16 @@ class AuthService(
     fun updateProfile(request: UpdateProfileRequest): UserResponse {
         val authentication = SecurityContextHolder.getContext().authentication
         val userDetails = authentication.principal as CustomUserDetails
-        
-        val user = userRepository.findById(userDetails.id)
-            .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
+
+        val user =
+            userRepository.findById(userDetails.id).orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
 
         request.fullName?.let { user.fullName = it }
-        request.email?.let { 
+        request.email?.let {
             if (it != user.email && userRepository.existsByEmail(it)) {
                 throw ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS)
             }
-            user.email = it 
+            user.email = it
         }
         request.fcmToken?.let { user.fcmToken = it }
 
@@ -153,9 +156,9 @@ class AuthService(
     fun changePassword(request: ChangePasswordRequest) {
         val authentication = SecurityContextHolder.getContext().authentication
         val userDetails = authentication.principal as CustomUserDetails
-        
-        val user = userRepository.findById(userDetails.id)
-            .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
+
+        val user =
+            userRepository.findById(userDetails.id).orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
 
         if (!passwordEncoder.matches(request.currentPassword, user.passwordHash)) {
             throw ApiException(ErrorCode.PASSWORD_MISMATCH)
@@ -165,15 +168,55 @@ class AuthService(
         userRepository.save(user)
     }
 
+    @Transactional
+    fun uploadAvatar(file: MultipartFile): UserResponse {
+        val authentication = SecurityContextHolder.getContext().authentication
+        val userDetails = authentication.principal as CustomUserDetails
+
+        val user = userRepository.findById(userDetails.id)
+            .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
+
+        // Delete old avatar from Cloudinary if exists
+        user.avatarUrl?.let { oldUrl ->
+            cloudinaryService.deleteFile(oldUrl)
+        }
+
+        // Upload new avatar to Cloudinary
+        val avatarUrl = cloudinaryService.uploadFile(file, "users")
+        user.avatarUrl = avatarUrl
+
+        val savedUser = userRepository.save(user)
+        return toUserResponse(savedUser)
+    }
+
+    @Transactional
+    fun deleteAvatar(): UserResponse {
+        val authentication = SecurityContextHolder.getContext().authentication
+        val userDetails = authentication.principal as CustomUserDetails
+
+        val user = userRepository.findById(userDetails.id)
+            .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
+
+        // Delete avatar from Cloudinary if exists
+        user.avatarUrl?.let { oldUrl ->
+            cloudinaryService.deleteFile(oldUrl)
+        }
+
+        user.avatarUrl = null
+
+        val savedUser = userRepository.save(user)
+        return toUserResponse(savedUser)
+    }
+
     private fun toUserResponse(user: User): UserResponse {
         return UserResponse(
             id = user.id!!,
             username = user.username,
             email = user.email,
             fullName = user.fullName,
+            avatarUrl = user.avatarUrl,  // Full Cloudinary URL
             isActive = user.isActive,
-            roles = user.roles.map { it.name }
-        )
+            roles = user.roles.map { it.name })
     }
 }
 

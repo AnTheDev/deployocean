@@ -58,9 +58,15 @@ server:
   servlet:
     context-path: /
 
-# File Upload Configuration
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+  folder: ${CLOUDINARY_FOLDER:smart-grocery}
+
+# File Upload Configuration (legacy - kept for reference)
 file:
-  upload-dir: ${APP_UPLOAD_PATH:uploads}
   max-size: 5242880  # 5MB in bytes
 
 # JWT Configuration

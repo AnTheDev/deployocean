@@ -24,7 +24,7 @@ class AuthService(
     private val authenticationManager: AuthenticationManager,
     private val jwtTokenProvider: JwtTokenProvider,
     private val jwtConfig: JwtConfig,
-    private val fileStorageService: FileStorageService
+    private val cloudinaryService: CloudinaryService
 ) {
 
     @Transactional
@@ -176,14 +176,14 @@ class AuthService(
         val user = userRepository.findById(userDetails.id)
             .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
 
-        // Delete old avatar if exists
-        user.avatarUrl?.let { oldPath ->
-            fileStorageService.deleteFile(oldPath)
+        // Delete old avatar from Cloudinary if exists
+        user.avatarUrl?.let { oldUrl ->
+            cloudinaryService.deleteFile(oldUrl)
         }
 
-        // Store new avatar
-        val avatarPath = fileStorageService.storeFile(file, "users")
-        user.avatarUrl = avatarPath
+        // Upload new avatar to Cloudinary
+        val avatarUrl = cloudinaryService.uploadFile(file, "users")
+        user.avatarUrl = avatarUrl
 
         val savedUser = userRepository.save(user)
         return toUserResponse(savedUser)
@@ -197,9 +197,9 @@ class AuthService(
         val user = userRepository.findById(userDetails.id)
             .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
 
-        // Delete avatar file if exists
-        user.avatarUrl?.let { oldPath ->
-            fileStorageService.deleteFile(oldPath)
+        // Delete avatar from Cloudinary if exists
+        user.avatarUrl?.let { oldUrl ->
+            cloudinaryService.deleteFile(oldUrl)
         }
 
         user.avatarUrl = null
@@ -214,7 +214,7 @@ class AuthService(
             username = user.username,
             email = user.email,
             fullName = user.fullName,
-            avatarUrl = user.avatarUrl?.let { "/files/$it" },
+            avatarUrl = user.avatarUrl,  // Full Cloudinary URL
             isActive = user.isActive,
             roles = user.roles.map { it.name })
     }

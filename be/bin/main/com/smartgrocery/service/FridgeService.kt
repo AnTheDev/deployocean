@@ -94,7 +94,7 @@ class FridgeService(
         val currentUser = getCurrentUser()
         checkFamilyMembership(familyId, currentUser.id)
 
-        return fridgeItemRepository.findActiveByFamilyId(familyId)
+        return fridgeItemRepository.findActiveByFamilyIdWithDetails(familyId)
             .map { toResponse(it) }
     }
 
@@ -178,7 +178,7 @@ class FridgeService(
         val today = LocalDate.now()
         val thresholdDate = today.plusDays(daysThreshold.toLong())
 
-        return fridgeItemRepository.findExpiringSoon(today, thresholdDate)
+        return fridgeItemRepository.findExpiringSoonWithDetails(today, thresholdDate)
             .filter { it.family.id == familyId }
             .map { toResponse(it) }
     }
@@ -188,7 +188,7 @@ class FridgeService(
         checkFamilyMembership(familyId, currentUser.id)
 
         val today = LocalDate.now()
-        return fridgeItemRepository.findExpired(today)
+        return fridgeItemRepository.findExpiredWithDetails(today)
             .filter { it.family.id == familyId }
             .map { toResponse(it) }
     }
@@ -197,7 +197,7 @@ class FridgeService(
         val currentUser = getCurrentUser()
         checkFamilyMembership(familyId, currentUser.id)
 
-        val items = fridgeItemRepository.findActiveByFamilyId(familyId)
+        val items = fridgeItemRepository.findActiveByFamilyIdWithDetails(familyId)
         val today = LocalDate.now()
         val thresholdDate = today.plusDays(3)
 

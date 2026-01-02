@@ -36,6 +36,8 @@ data class CreateRecipeRequest(
 
     val isPublic: Boolean = true,
 
+    val notes: String? = null,
+
     @field:Valid
     val ingredients: List<CreateRecipeIngredientRequest> = emptyList()
 )
@@ -63,6 +65,8 @@ data class UpdateRecipeRequest(
     val imageUrl: String? = null,
 
     val isPublic: Boolean? = null,
+
+    val notes: String? = null,
 
     @field:Valid
     val ingredients: List<CreateRecipeIngredientRequest>? = null
@@ -100,6 +104,7 @@ data class RecipeResponse(
     val servings: Int,
     val imageUrl: String?,
     val isPublic: Boolean,
+    val notes: String?,
     val createdBy: UserSimpleResponse?,
     val createdAt: Instant,
     val updatedAt: Instant
@@ -117,6 +122,7 @@ data class RecipeDetailResponse(
     val servings: Int,
     val imageUrl: String?,
     val isPublic: Boolean,
+    val notes: String?,
     val createdBy: UserSimpleResponse?,
     val ingredients: List<RecipeIngredientResponse>,
     val createdAt: Instant,
