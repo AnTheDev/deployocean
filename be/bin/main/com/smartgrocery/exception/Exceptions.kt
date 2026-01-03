@@ -80,6 +80,15 @@ enum class ErrorCode(val code: Int, val message: String) {
     // Notification errors (2300-2399)
     NOTIFICATION_NOT_FOUND(2300, "Notification not found"),
 
+    // Admin errors (2300-2399)
+    CANNOT_MODIFY_SELF(2300, "Cannot modify your own account"),
+    CANNOT_DEACTIVATE_SELF(2301, "Cannot deactivate your own account"),
+    CANNOT_DELETE_SELF(2302, "Cannot delete your own account"),
+    CANNOT_REMOVE_OWN_ADMIN(2303, "Cannot remove ADMIN role from your own account"),
+    ROLE_NOT_FOUND(2304, "Role not found"),
+    MUST_HAVE_AT_LEAST_ONE_ROLE(2305, "User must have at least one role"),
+    CANNOT_DELETE_LAST_ADMIN(2306, "Cannot delete the last admin user"),
+
     // Server errors (5000+)
     INTERNAL_ERROR(5000, "Internal server error")
 }
