@@ -18,7 +18,7 @@ class FamilyService(
     private val familyMemberRepository: FamilyMemberRepository,
     private val userRepository: UserRepository,
     private val familyInvitationRepository: FamilyInvitationRepository,
-    private val cloudinaryService: CloudinaryService,
+    private val digitalOceanService: DigitalOceanService,
     private val friendshipRepository: FriendshipRepository
 ) {
 
@@ -30,8 +30,8 @@ class FamilyService(
 
         val inviteCode = generateInviteCode()
 
-        // Upload image to Cloudinary if provided
-        val imageUrl: String? = image?.let { cloudinaryService.uploadFile(it, "families") }
+        // Upload image to DigitalOcean if provided
+        val imageUrl: String? = image?.let { digitalOceanService.uploadFile(it, "families") }
 
         val family = Family(
             name = request.name,
@@ -363,11 +363,11 @@ class FamilyService(
 
         // Update image if provided
         image?.let {
-            // Delete old image from Cloudinary if exists
+            // Delete old image from DigitalOcean if exists
             family.imageUrl?.let { oldUrl ->
-                cloudinaryService.deleteFile(oldUrl)
+                digitalOceanService.deleteFile(oldUrl)
             }
-            family.imageUrl = cloudinaryService.uploadFile(it, "families")
+            family.imageUrl = digitalOceanService.uploadFile(it, "families")
         }
 
         val savedFamily = familyRepository.save(family)
@@ -384,9 +384,9 @@ class FamilyService(
         val family =
             familyRepository.findById(familyId).orElseThrow { ResourceNotFoundException(ErrorCode.FAMILY_NOT_FOUND) }
 
-        // Delete image from Cloudinary if exists
+        // Delete image from DigitalOcean if exists
         family.imageUrl?.let { imageUrl ->
-            cloudinaryService.deleteFile(imageUrl)
+            digitalOceanService.deleteFile(imageUrl)
         }
         family.imageUrl = null
 

@@ -24,7 +24,7 @@ class AuthService(
     private val authenticationManager: AuthenticationManager,
     private val jwtTokenProvider: JwtTokenProvider,
     private val jwtConfig: JwtConfig,
-    private val cloudinaryService: CloudinaryService
+    private val digitalOceanService: DigitalOceanService
 ) {
 
     @Transactional
@@ -176,13 +176,13 @@ class AuthService(
         val user = userRepository.findById(userDetails.id)
             .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
 
-        // Delete old avatar from Cloudinary if exists
+        // Delete old avatar from DigitalOcean if exists
         user.avatarUrl?.let { oldUrl ->
-            cloudinaryService.deleteFile(oldUrl)
+            digitalOceanService.deleteFile(oldUrl)
         }
 
-        // Upload new avatar to Cloudinary
-        val avatarUrl = cloudinaryService.uploadFile(file, "users")
+        // Upload new avatar to DigitalOcean
+        val avatarUrl = digitalOceanService.uploadFile(file, "users")
         user.avatarUrl = avatarUrl
 
         val savedUser = userRepository.save(user)
@@ -197,9 +197,9 @@ class AuthService(
         val user = userRepository.findById(userDetails.id)
             .orElseThrow { ResourceNotFoundException(ErrorCode.USER_NOT_FOUND) }
 
-        // Delete avatar from Cloudinary if exists
+        // Delete avatar from DigitalOcean if exists
         user.avatarUrl?.let { oldUrl ->
-            cloudinaryService.deleteFile(oldUrl)
+            digitalOceanService.deleteFile(oldUrl)
         }
 
         user.avatarUrl = null
