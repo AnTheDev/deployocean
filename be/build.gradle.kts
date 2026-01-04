@@ -60,8 +60,11 @@ dependencies {
     // Dotenv for loading .env files
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
 
-    // Cloudinary for image storage
-    implementation("com.cloudinary:cloudinary-http44:1.36.0")
+    // Cloudinary for image storage (deprecated - replaced with DigitalOcean Spaces)
+    // implementation("com.cloudinary:cloudinary-http44:1.36.0")
+
+    // AWS SDK v2 for DigitalOcean Spaces (S3-compatible)
+    implementation("software.amazon.awssdk:s3:2.20.100")
 
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
