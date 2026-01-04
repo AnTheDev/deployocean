@@ -5,7 +5,7 @@ spring:
   # Docker Compose - tự động khởi động PostgreSQL container
   docker:
     compose:
-      enabled: true
+      enabled: false
       file: docker-compose.yml
       lifecycle-management: start_and_stop  # Tự động start khi run, stop khi shutdown
       start:
